@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <%= render "layouts/theme_head" %>
+  </head>
+  <body>
+    <div class="container-fluid p-0">
+      <div class="row m-0">
+        <div class="col-12 p-0">
+          <div class="login-card">
+            <div>
+              <div>
+                <a class="logo text-center" href="/">
+                  <h2 class="text-center" style="font-family: Inter, sans-serif; font-weight:800; color:#7366FF; letter-spacing:-0.5px;">
+                    Social Portal
+                  </h2>
+                </a>
+              </div>
+              <div class="login-main">
+                <% flash.each do |type, message| %>
+                  <div class="alert alert-<%= type == 'notice' ? 'success' : 'danger' %> mb-3">
+                    <%= message %>
+                  </div>
+                <% end %>
+                <%= yield %>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <%= render "layouts/theme_scripts" %>
+  </body>
+</html>

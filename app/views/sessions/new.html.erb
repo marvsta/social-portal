@@ -1,0 +1,17 @@
+<% content_for :title, "Sign in" %>
+<%= form_with url: login_path, local: true, data: { turbo: false } do |f| %>
+  <h4>Sign in to your account</h4>
+  <p>Welcome back. Enter your credentials below.</p>
+  <div class="form-group mb-3">
+    <label class="col-form-label">Email</label>
+    <input class="form-control" type="email" name="email" autofocus required value="<%= params[:email] %>">
+  </div>
+  <div class="form-group mb-3">
+    <label class="col-form-label">Password</label>
+    <input class="form-control" type="password" name="password" required>
+  </div>
+  <div class="form-group mb-0">
+    <button class="btn btn-primary btn-block w-100" type="submit">Sign in</button>
+  </div>
+  <p class="mt-4 mb-0">Don't have an account? <%= link_to "Create one", signup_path %></p>
+<% end %>

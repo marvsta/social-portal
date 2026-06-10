@@ -1,0 +1,37 @@
+<% content_for :title, "Companies" %>
+<div class="container-fluid">
+  <div class="page-header">
+    <div class="row">
+      <div class="col-sm-6">
+        <h3>Your companies</h3>
+        <p class="text-muted mb-0">Pick a company to manage, or create a new one.</p>
+      </div>
+      <div class="col-sm-6 text-end">
+        <%= link_to new_company_path, class: "btn btn-primary" do %>
+          <i data-feather="plus"></i>&nbsp; New company
+        <% end %>
+      </div>
+    </div>
+  </div>
+  <div class="row">
+    <% @companies.each do |company| %>
+      <div class="col-md-4 mb-4">
+        <div class="card h-100">
+          <div class="card-body">
+            <h5 class="card-title mb-1"><%= company.name %></h5>
+            <p class="text-muted mb-3"><%= company.website.presence || "No website set" %></p>
+            <p class="mb-2 small">
+              <i data-feather="users" class="me-1"></i> <%= pluralize(company.users.count, "member") %>
+              &nbsp; <i data-feather="share-2" class="me-1"></i> <%= pluralize(company.social_channels.count, "channel") %>
+              &nbsp; <i data-feather="edit-3" class="me-1"></i> <%= pluralize(company.posts.count, "post") %>
+            </p>
+            <div class="d-flex gap-2">
+              <%= link_to "Open", company_calendar_path(company), class: "btn btn-primary btn-sm" %>
+              <%= link_to "Settings", edit_company_path(company), class: "btn btn-outline-secondary btn-sm" %>
+            </div>
+          </div>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</div>

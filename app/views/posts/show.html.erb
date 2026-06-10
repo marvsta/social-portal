@@ -1,0 +1,121 @@
+<% content_for :title, @post.title.presence || @post.caption.truncate(40) %>
+<div class="container-fluid">
+  <div class="page-header">
+    <div class="row">
+      <div class="col-sm-7">
+        <h3 class="mb-1"><%= @post.title.presence || "Post ##{@post.id}" %></h3>
+        <p class="mb-0">
+          <span class="badge me-2" style="background:<%= @post.status_color %>; color:white"><%= @post.status_label %></span>
+          <% @post.social_channels.each do |c| %>
+            <span class="badge me-1" style="background:<%= c.platform_color %>"><%= c.platform_label %> · <%= c.display %></span>
+          <% end %>
+        </p>
+      </div>
+      <div class="col-sm-5 text-end">
+        <%= link_to "Edit", edit_company_post_path(@company, @post), class: "btn btn-outline-secondary btn-sm" %>
+        <%= button_to "Delete", company_post_path(@company, @post), method: :delete,
+              class: "btn btn-outline-danger btn-sm",
+              form: { class: "d-inline", data: { turbo_confirm: "Delete this post?" } } %>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-lg-8 mb-4">
+      <div class="card">
+        <div class="card-header"><h5 class="mb-0">Caption</h5></div>
+        <div class="card-body">
+          <p style="white-space: pre-wrap;"><%= @post.caption %></p>
+          <% if @post.hashtags.present? %>
+            <p class="text-primary mb-0"><%= @post.hashtags %></p>
+          <% end %>
+        </div>
+      </div>
+      <% if @post.media.attached? %>
+        <div class="card mt-3">
+          <div class="card-header"><h5 class="mb-0">Media</h5></div>
+          <div class="card-body d-flex flex-wrap gap-2">
+            <% @post.media.each do |m| %>
+              <% if m.image? %>
+                <%= image_tag m, style: "max-height:200px;border-radius:8px;" %>
+              <% elsif m.video? %>
+                <video controls style="max-height:240px;border-radius:8px;"><source src="<%= rails_blob_path(m) %>"></video>
+              <% else %>
+                <span class="badge bg-secondary"><%= m.filename %></span>
+              <% end %>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+
+      <div class="card mt-3">
+        <div class="card-header"><h5 class="mb-0">Per-channel status</h5></div>
+        <div class="card-body p-0">
+          <table class="table mb-0">
+            <thead>
+              <tr><th>Channel</th><th>Status</th><th>Published</th><th>Engagement</th><th>External</th></tr>
+            </thead>
+            <tbody>
+              <% @channel_posts.each do |cp| %>
+                <tr>
+                  <td>
+                    <span class="badge me-2" style="background:<%= cp.social_channel.platform_color %>"><%= cp.social_channel.platform_label %></span>
+                    <%= cp.social_channel.display %>
+                  </td>
+                  <td><span class="badge bg-light text-dark"><%= cp.status.humanize %></span></td>
+                  <td><%= l(cp.published_at, format: :short) if cp.published_at %></td>
+                  <td><%= number_with_delimiter(cp.engagement) %></td>
+                  <td>
+                    <% if cp.external_url.present? %>
+                      <%= link_to "View", cp.external_url, target: "_blank", rel: "noopener", class: "btn btn-sm btn-link" %>
+                    <% elsif cp.last_error.present? %>
+                      <span class="text-danger small"><%= cp.last_error.truncate(50) %></span>
+                    <% end %>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-4 mb-4">
+      <div class="card">
+        <div class="card-header"><h5 class="mb-0">Workflow</h5></div>
+        <div class="card-body">
+          <% if @post.scheduled_at %>
+            <p><strong>Scheduled:</strong> <%= l(@post.scheduled_at, format: :long) %></p>
+          <% else %>
+            <p class="text-muted">Not scheduled.</p>
+          <% end %>
+          <% if @post.approved_at %>
+            <p class="small text-muted">Approved by <%= @post.approved_by&.display_name %> on <%= l(@post.approved_at, format: :short) %></p>
+          <% end %>
+          <div class="d-grid gap-2">
+            <% case @post.status %>
+            <% when "draft" %>
+              <%= button_to "Submit for review", submit_for_review_company_post_path(@company, @post), method: :post, class: "btn btn-warning" %>
+            <% when "pending_review" %>
+              <%= button_to "Approve", approve_company_post_path(@company, @post), method: :post, class: "btn btn-success" %>
+            <% when "approved" %>
+              <%= button_to "Schedule", schedule_company_post_path(@company, @post), method: :post, class: "btn btn-primary",
+                    form: { data: { turbo_confirm: "Schedule for #{@post.scheduled_at ? l(@post.scheduled_at, format: :long) : 'now'}?" } } %>
+            <% when "scheduled", "failed", "partial_failure" %>
+              <%= button_to "Publish now", publish_now_company_post_path(@company, @post), method: :post, class: "btn btn-primary",
+                    form: { data: { turbo_confirm: "Publish to all selected channels right now?" } } %>
+            <% end %>
+            <%= link_to "View metrics", company_post_metrics_path(@company, @post), class: "btn btn-outline-primary" %>
+          </div>
+        </div>
+      </div>
+
+      <% if @post.review_notes.present? %>
+        <div class="card mt-3">
+          <div class="card-header"><h5 class="mb-0">Notes</h5></div>
+          <div class="card-body"><%= simple_format(@post.review_notes) %></div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,12 @@
+<% content_for :title, "Connect channel" %>
+<div class="container-fluid">
+  <div class="page-header">
+    <h3>Connect a channel</h3>
+    <p class="text-muted">Add the social account this company will publish to.</p>
+  </div>
+  <div class="card">
+    <div class="card-body">
+      <%= render "form", form_url: company_social_channels_path(@company), submit_label: "Connect" %>
+    </div>
+  </div>
+</div>

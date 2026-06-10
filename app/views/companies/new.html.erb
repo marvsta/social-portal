@@ -1,0 +1,12 @@
+<% content_for :title, "New company" %>
+<div class="container-fluid">
+  <div class="page-header">
+    <h3>Create a company</h3>
+    <p class="text-muted">A company is the workspace that owns social channels, posts, and analytics.</p>
+  </div>
+  <div class="card">
+    <div class="card-body">
+      <%= render "form", form_url: companies_path, submit_label: "Create company" %>
+    </div>
+  </div>
+</div>

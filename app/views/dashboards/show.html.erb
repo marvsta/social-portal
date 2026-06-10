@@ -1,0 +1,137 @@
+<% content_for :title, "Performance" %>
+
+<div class="container-fluid">
+  <div class="page-header">
+    <div class="row">
+      <div class="col-sm-7">
+        <h3>Performance</h3>
+        <p class="text-muted mb-0">Last <%= @range %> days · <%= @company.name %></p>
+      </div>
+      <div class="col-sm-5 text-end">
+        <%= link_to "7d", company_dashboard_path(@company, days: 7), class: "btn btn-sm #{@range == 7 ? 'btn-primary' : 'btn-outline-primary'}" %>
+        <%= link_to "30d", company_dashboard_path(@company, days: 30), class: "btn btn-sm #{@range == 30 ? 'btn-primary' : 'btn-outline-primary'}" %>
+        <%= link_to "90d", company_dashboard_path(@company, days: 90), class: "btn btn-sm #{@range == 90 ? 'btn-primary' : 'btn-outline-primary'}" %>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <% [
+      ["Published",   @published_count, "#16A34A", "send"],
+      ["Scheduled",   @scheduled_count, "#7366FF", "clock"],
+      ["Drafts",      @draft_count,     "#A0AEC0", "edit-3"],
+      ["Reach",       number_with_delimiter(@total_reach), "#3B82F6", "eye"],
+      ["Engagement",  number_with_delimiter(@total_engagement), "#E1306C", "heart"],
+      ["Avg eng. rate", "#{@avg_engagement_rate}%", "#F59E0B", "trending-up"]
+    ].each do |label, value, color, icon| %>
+      <div class="col-md-2 col-sm-4 col-6 mb-3">
+        <div class="card h-100">
+          <div class="card-body p-3">
+            <div class="d-flex align-items-center mb-2">
+              <span style="width:32px;height:32px;border-radius:8px;background:<%= color %>;color:white;display:inline-flex;align-items:center;justify-content:center;">
+                <i data-feather="<%= icon %>" style="width:16px;height:16px;"></i>
+              </span>
+              <small class="text-muted ms-2"><%= label %></small>
+            </div>
+            <h4 class="mb-0"><%= value %></h4>
+          </div>
+        </div>
+      </div>
+    <% end %>
+  </div>
+
+  <div class="row">
+    <div class="col-lg-8 mb-4">
+      <div class="card">
+        <div class="card-header"><h5 class="mb-0">Engagement over time</h5></div>
+        <div class="card-body">
+          <canvas id="engagementChart" height="100"></canvas>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-4 mb-4">
+      <div class="card h-100">
+        <div class="card-header"><h5 class="mb-0">By platform</h5></div>
+        <div class="card-body">
+          <% if @engagement_by_platform.empty? %>
+            <p class="text-muted mb-0">No engagement recorded yet.</p>
+          <% else %>
+            <canvas id="platformChart" height="180"></canvas>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><h5 class="mb-0">Top performing posts</h5></div>
+    <div class="card-body p-0">
+      <% if @top_posts.empty? %>
+        <p class="p-4 text-muted mb-0">No published posts yet.</p>
+      <% else %>
+        <table class="table mb-0">
+          <thead>
+            <tr><th>Post</th><th>Channels</th><th>Published</th><th class="text-end">Engagement</th></tr>
+          </thead>
+          <tbody>
+            <% @top_posts.each do |p| %>
+              <tr>
+                <td><%= link_to (p.title.presence || p.caption.truncate(50)), company_post_path(@company, p), class: "fw-medium text-dark" %></td>
+                <td>
+                  <% p.social_channels.each do |c| %>
+                    <span class="badge me-1" style="background:<%= c.platform_color %>"><%= c.platform_label %></span>
+                  <% end %>
+                </td>
+                <td><%= l(p.updated_at, format: :short) %></td>
+                <td class="text-end fw-bold"><%= number_with_delimiter(p.total_engagement) %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<% content_for :scripts do %>
+  <script src="/theme/js/chart/Chart.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      var engEl = document.getElementById('engagementChart');
+      if (engEl && typeof Chart !== 'undefined') {
+        var labels = <%= raw @engagement_by_day.map { |d, _| d.to_s }.to_json %>;
+        var data   = <%= raw @engagement_by_day.map { |_, v| v.to_i }.to_json %>;
+        new Chart(engEl.getContext('2d'), {
+          type: 'line',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: 'Engagement',
+              data: data,
+              borderColor: '#7366FF',
+              backgroundColor: 'rgba(115,102,255,0.15)',
+              tension: 0.3,
+              fill: true
+            }]
+          },
+          options: { responsive: true, plugins: { legend: { display: false } } }
+        });
+      }
+
+      var platEl = document.getElementById('platformChart');
+      if (platEl && typeof Chart !== 'undefined') {
+        new Chart(platEl.getContext('2d'), {
+          type: 'doughnut',
+          data: {
+            labels: <%= raw @engagement_by_platform.map { |r| r[:platform] }.to_json %>,
+            datasets: [{
+              data: <%= raw @engagement_by_platform.map { |r| r[:engagement] }.to_json %>,
+              backgroundColor: <%= raw @engagement_by_platform.map { |r| r[:color] }.to_json %>
+            }]
+          },
+          options: { responsive: true }
+        });
+      }
+    });
+  </script>
+<% end %>

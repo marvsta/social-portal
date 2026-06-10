@@ -1,0 +1,54 @@
+<div class="page-main-header">
+  <div class="main-header-right row m-0">
+    <div class="main-header-left">
+      <div class="logo-wrapper">
+        <%= link_to (current_company ? company_calendar_path(current_company) : companies_path), class: "d-flex align-items-center" do %>
+          <h4 class="mb-0 ms-2" style="font-family: Inter, sans-serif; font-weight:800; color:#7366FF; letter-spacing:-0.5px;">Social Portal</h4>
+        <% end %>
+      </div>
+      <div class="toggle-sidebar"><i class="status_toggle middle" data-feather="align-center" id="sidebar-toggle"></i></div>
+    </div>
+    <div class="left-menu-header col">
+      <ul>
+        <% if current_company %>
+          <li class="ps-3">
+            <span class="text-muted f-12 d-block">Current company</span>
+            <strong><%= current_company.name %></strong>
+          </li>
+        <% end %>
+      </ul>
+    </div>
+    <div class="nav-right col pull-right right-menu p-0">
+      <ul class="nav-menus">
+        <% if current_user&.companies&.any? %>
+          <li class="onhover-dropdown">
+            <button class="btn btn-outline-primary btn-sm" type="button">
+              <i data-feather="briefcase"></i>&nbsp;Switch company
+            </button>
+            <div class="onhover-show-div p-3" style="min-width: 240px;">
+              <% current_user.companies.each do |c| %>
+                <%= button_to c.name, switch_company_path(c), method: :post, class: "btn btn-link p-0 d-block text-start mb-2", form: { class: "d-block" } %>
+              <% end %>
+              <hr>
+              <%= link_to "+ New company", new_company_path, class: "btn btn-sm btn-primary w-100" %>
+            </div>
+          </li>
+        <% end %>
+        <li class="onhover-dropdown">
+          <div class="d-flex align-items-center" style="cursor:pointer;">
+            <div style="width:32px;height:32px;border-radius:50%;background:#7366FF;color:white;display:flex;align-items:center;justify-content:center;font-weight:600;">
+              <%= current_user&.display_name&.first&.upcase %>
+            </div>
+            <span class="ms-2 d-none d-md-inline"><%= current_user&.display_name %></span>
+          </div>
+          <ul class="profile-dropdown onhover-show-div">
+            <li><span class="text-muted small px-2"><%= current_user&.email %></span></li>
+            <li><hr class="my-1"></li>
+            <li><%= button_to "Sign out", logout_path, method: :delete, class: "btn btn-link text-danger p-0", form: { class: "d-inline" } %></li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+    <div class="d-lg-none mobile-toggle pull-right w-auto"><i data-feather="more-horizontal"></i></div>
+  </div>
+</div>

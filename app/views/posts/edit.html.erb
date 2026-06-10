@@ -1,0 +1,14 @@
+<% content_for :title, "Edit post" %>
+<div class="container-fluid">
+  <div class="page-header">
+    <div class="row">
+      <div class="col-sm-6"><h3>Edit post</h3></div>
+      <div class="col-sm-6 text-end">
+        <%= link_to "View", company_post_path(@company, @post), class: "btn btn-outline-secondary btn-sm" %>
+      </div>
+    </div>
+  </div>
+  <div class="card"><div class="card-body">
+    <%= render "form", form_url: company_post_path(@company, @post), submit_label: "Save changes" %>
+  </div></div>
+</div>

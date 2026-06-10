@@ -1,0 +1,72 @@
+<%= form_with model: @post, url: form_url, local: true, multipart: true do |f| %>
+  <% if @post.errors.any? %>
+    <div class="alert alert-danger"><%= @post.errors.full_messages.to_sentence %></div>
+  <% end %>
+
+  <div class="row">
+    <div class="col-md-8">
+      <div class="mb-3">
+        <%= f.label :title, "Internal title (optional)", class: "form-label" %>
+        <%= f.text_field :title, class: "form-control", placeholder: "Used to find this post in search" %>
+      </div>
+      <div class="mb-3">
+        <%= f.label :caption, class: "form-label" %>
+        <%= f.text_area :caption, class: "form-control", rows: 6, required: true, placeholder: "Write your caption here..." %>
+      </div>
+      <div class="mb-3">
+        <%= f.label :hashtags, class: "form-label" %>
+        <%= f.text_field :hashtags, class: "form-control", placeholder: "#brand #campaign" %>
+      </div>
+      <div class="mb-3">
+        <%= f.label :media, "Media (images / videos)", class: "form-label" %>
+        <%= f.file_field :media, multiple: true, class: "form-control", accept: "image/*,video/*" %>
+        <% if @post.media.attached? %>
+          <div class="mt-2 d-flex flex-wrap gap-2">
+            <% @post.media.each do |m| %>
+              <% if m.image? %>
+                <%= image_tag m, style: "max-height:80px;border-radius:6px;" %>
+              <% else %>
+                <span class="badge bg-secondary"><%= m.filename %></span>
+              <% end %>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="mb-3">
+        <%= f.label :scheduled_at, class: "form-label" %>
+        <%= f.datetime_local_field :scheduled_at, class: "form-control",
+            value: (@post.scheduled_at&.strftime("%Y-%m-%dT%H:%M")) %>
+        <small class="text-muted">Leave blank to keep as draft.</small>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Channels</label>
+        <% if @channels.empty? %>
+          <p class="small text-muted mb-0">
+            No channels yet — <%= link_to "connect one", new_company_social_channel_path(@company) %> first.
+          </p>
+        <% else %>
+          <% @channels.each do |c| %>
+            <div class="form-check">
+              <%= check_box_tag "post[social_channel_ids][]", c.id, @post.social_channel_ids.include?(c.id), id: "ch_#{c.id}", class: "form-check-input" %>
+              <label class="form-check-label" for="ch_<%= c.id %>">
+                <span class="badge" style="background:<%= c.platform_color %>"><%= c.platform_label %></span>
+                <%= c.display %>
+              </label>
+            </div>
+          <% end %>
+        <% end %>
+      </div>
+      <div class="mb-3">
+        <%= f.label :review_notes, "Notes for reviewers", class: "form-label" %>
+        <%= f.text_area :review_notes, class: "form-control", rows: 3 %>
+      </div>
+    </div>
+  </div>
+
+  <%= hidden_field_tag "post[social_channel_ids][]", "" %>
+  <%= f.submit submit_label, class: "btn btn-primary" %>
+  <%= link_to "Cancel", company_calendar_path(@company), class: "btn btn-link" %>
+<% end %>

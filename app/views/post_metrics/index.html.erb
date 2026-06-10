@@ -1,0 +1,91 @@
+<% content_for :title, "Metrics" %>
+<div class="container-fluid">
+  <div class="page-header">
+    <div class="row">
+      <div class="col-sm-7">
+        <h3>Metrics</h3>
+        <p class="text-muted mb-0"><%= link_to (@post.title.presence || @post.caption.truncate(50)), company_post_path(@company, @post) %></p>
+      </div>
+      <div class="col-sm-5 text-end">
+        <%= link_to "Back to post", company_post_path(@company, @post), class: "btn btn-outline-secondary btn-sm" %>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <% @latest_totals.each do |row| %>
+      <div class="col-lg-6 mb-3">
+        <div class="card">
+          <div class="card-body">
+            <div class="d-flex align-items-center mb-3">
+              <span style="width:36px;height:36px;border-radius:8px;background:<%= row[:channel].platform_color %>;color:white;display:inline-flex;align-items:center;justify-content:center;font-weight:700;">
+                <%= row[:channel].platform_label[0] %>
+              </span>
+              <div class="ms-3">
+                <h6 class="mb-0"><%= row[:channel].platform_label %> · <%= row[:channel].display %></h6>
+                <small class="text-muted">
+                  Last captured: <%= row[:captured_at] ? l(row[:captured_at], format: :short) : "no data" %>
+                </small>
+              </div>
+            </div>
+            <div class="row text-center">
+              <% [
+                ["Likes",        row[:likes]],
+                ["Comments",     row[:comments]],
+                ["Shares",       row[:shares]],
+                ["Saves",        row[:saves]],
+                ["Reach",        row[:reach]],
+                ["Impressions",  row[:impressions]]
+              ].each do |label, value| %>
+                <div class="col-4 mb-2">
+                  <h5 class="mb-0"><%= number_with_delimiter(value) %></h5>
+                  <small class="text-muted"><%= label %></small>
+                </div>
+              <% end %>
+              <div class="col-12 mt-2">
+                <span class="badge bg-light text-dark">Engagement rate: <%= row[:engagement_rate] %>%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    <% end %>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><h5 class="mb-0">Engagement over time</h5></div>
+    <div class="card-body">
+      <canvas id="postChart" height="100"></canvas>
+    </div>
+  </div>
+</div>
+
+<% content_for :scripts do %>
+  <script src="/theme/js/chart/Chart.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      var el = document.getElementById('postChart');
+      if (!el || typeof Chart === 'undefined') return;
+      var series = <%= raw @timeseries.to_json %>;
+      var datasets = series.map(function(s) {
+        return {
+          label: s.label,
+          data: s.data,
+          borderColor: s.color,
+          backgroundColor: s.color + '33',
+          tension: 0.3,
+          fill: false
+        };
+      });
+      new Chart(el.getContext('2d'), {
+        type: 'line',
+        data: { datasets: datasets },
+        options: {
+          responsive: true,
+          parsing: false,
+          scales: { x: { type: 'time', time: { unit: 'day' } } }
+        }
+      });
+    });
+  </script>
+<% end %>

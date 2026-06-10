@@ -1,0 +1,62 @@
+<% content_for :title, "Posts" %>
+<div class="container-fluid">
+  <div class="page-header">
+    <div class="row">
+      <div class="col-sm-7">
+        <h3>All posts</h3>
+        <p class="text-muted mb-0">Every draft, scheduled, and published post for <%= @company.name %>.</p>
+      </div>
+      <div class="col-sm-5 text-end">
+        <%= link_to new_company_post_path(@company), class: "btn btn-primary" do %>
+          <i data-feather="plus"></i>&nbsp; New post
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header pb-2 d-flex flex-wrap align-items-center gap-2">
+      <%= link_to "All", company_posts_path(@company), class: "btn btn-sm #{@status.nil? ? 'btn-primary' : 'btn-outline-primary'}" %>
+      <% Post::STATUSES.each do |s| %>
+        <%= link_to Post.new(status: s).status_label, company_posts_path(@company, status: s),
+              class: "btn btn-sm #{@status == s ? 'btn-primary' : 'btn-outline-primary'}" %>
+      <% end %>
+    </div>
+    <div class="card-body p-0">
+      <% if @posts.empty? %>
+        <p class="p-4 text-muted mb-0">No posts yet.</p>
+      <% else %>
+        <table class="table mb-0">
+          <thead>
+            <tr>
+              <th>Post</th>
+              <th>Channels</th>
+              <th>Status</th>
+              <th>Scheduled</th>
+              <th>Author</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @posts.each do |p| %>
+              <tr>
+                <td><%= link_to (p.title.presence || p.caption.truncate(50)), company_post_path(@company, p), class: "fw-medium text-dark" %></td>
+                <td>
+                  <% p.social_channels.each do |c| %>
+                    <span class="badge me-1" style="background:<%= c.platform_color %>"><%= c.platform_label %></span>
+                  <% end %>
+                </td>
+                <td><span class="badge" style="background:<%= p.status_color %>;color:white;"><%= p.status_label %></span></td>
+                <td><%= l(p.scheduled_at, format: :short) if p.scheduled_at %></td>
+                <td><%= p.author.display_name %></td>
+                <td class="text-end">
+                  <%= link_to "Edit", edit_company_post_path(@company, p), class: "btn btn-sm btn-outline-secondary" %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      <% end %>
+    </div>
+  </div>
+</div>

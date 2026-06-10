@@ -1,0 +1,38 @@
+<% content_for :title, "Company settings" %>
+<div class="container-fluid">
+  <div class="page-header">
+    <div class="row">
+      <div class="col-sm-6">
+        <h3>Company settings</h3>
+        <p class="text-muted mb-0"><%= @company.name %></p>
+      </div>
+      <div class="col-sm-6 text-end">
+        <%= link_to "Back to calendar", company_calendar_path(@company), class: "btn btn-outline-secondary btn-sm" %>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-body">
+      <%= render "form", form_url: company_path(@company), submit_label: "Save changes" %>
+    </div>
+  </div>
+  <div class="card mt-4">
+    <div class="card-header"><h5 class="mb-0">Team members</h5></div>
+    <div class="card-body p-0">
+      <table class="table mb-0">
+        <thead>
+          <tr><th>Name</th><th>Email</th><th>Role</th></tr>
+        </thead>
+        <tbody>
+          <% @company.memberships.includes(:user).each do |m| %>
+            <tr>
+              <td><%= m.user.display_name %></td>
+              <td><%= m.user.email %></td>
+              <td><span class="badge bg-light text-dark"><%= m.role.capitalize %></span></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

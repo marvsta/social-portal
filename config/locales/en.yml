@@ -1,0 +1,10 @@
+en:
+  hello: "Hello world"
+  time:
+    formats:
+      short: "%b %-d · %-l:%M %p"
+      long: "%A, %B %-d at %-l:%M %p"
+  date:
+    formats:
+      short: "%b %-d, %Y"
+      long: "%A, %B %-d, %Y"
