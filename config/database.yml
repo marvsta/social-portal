@@ -87,18 +87,17 @@ test:
 production:
   primary: &primary_production
     <<: *default
-    database: social_portal_production
-    username: social_portal
-    password: <%= ENV["SOCIAL_PORTAL_DATABASE_PASSWORD"] %>
+    # Heroku provides a single Postgres database via DATABASE_URL. A 3-tier
+    # (multi-database) config like this one does NOT auto-merge DATABASE_URL, so
+    # it must be referenced explicitly — otherwise the client falls back to a
+    # local socket that doesn't exist on the dyno.
+    url: <%= ENV["DATABASE_URL"] %>
   cache:
     <<: *primary_production
-    database: social_portal_production_cache
     migrations_paths: db/cache_migrate
   queue:
     <<: *primary_production
-    database: social_portal_production_queue
     migrations_paths: db/queue_migrate
   cable:
     <<: *primary_production
-    database: social_portal_production_cable
     migrations_paths: db/cable_migrate
