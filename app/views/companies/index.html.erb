@@ -27,7 +27,9 @@
             </p>
             <div class="d-flex gap-2">
               <%= link_to "Open", company_calendar_path(company), class: "btn btn-primary btn-sm" %>
-              <%= link_to "Settings", edit_company_path(company), class: "btn btn-outline-secondary btn-sm" %>
+              <% if %w[owner admin].include?(current_user.role_in(company)) %>
+                <%= link_to "Settings", edit_company_path(company), class: "btn btn-outline-secondary btn-sm" %>
+              <% end %>
             </div>
           </div>
         </div>

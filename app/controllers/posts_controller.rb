@@ -1,6 +1,8 @@
 class PostsController < ApplicationController
   include CompanyScoped
 
+  before_action :require_publisher, only: %i[new create edit update destroy submit_for_review schedule publish_now]
+  before_action :require_manager, only: %i[approve]
   before_action :load_post, only: %i[show edit update destroy submit_for_review approve schedule publish_now]
 
   def index
@@ -93,7 +95,10 @@ class PostsController < ApplicationController
   end
 
   def post_params
-    params.require(:post).permit(:title, :caption, :hashtags, :scheduled_at, :status, :review_notes, media: [])
+    # Status is intentionally NOT permitted here: it is only ever changed through
+    # the workflow actions (submit_for_review/approve/schedule/publish_now), so a
+    # form cannot jump a post straight to "approved" or "published".
+    params.require(:post).permit(:title, :caption, :hashtags, :scheduled_at, :review_notes, media: [])
   end
 
   def parse_scheduled_at

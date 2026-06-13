@@ -1,6 +1,9 @@
 class SocialChannelsController < ApplicationController
   include CompanyScoped
 
+  # Channels hold access tokens, so only managers (owner/admin) may change them.
+  before_action :require_manager, only: %i[new create edit update destroy]
+
   def index
     @channels = @company.social_channels.order(:platform, :handle)
   end

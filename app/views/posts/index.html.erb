@@ -7,8 +7,10 @@
         <p class="text-muted mb-0">Every draft, scheduled, and published post for <%= @company.name %>.</p>
       </div>
       <div class="col-sm-5 text-end">
-        <%= link_to new_company_post_path(@company), class: "btn btn-primary" do %>
-          <i data-feather="plus"></i>&nbsp; New post
+        <% if current_membership&.can_publish? %>
+          <%= link_to new_company_post_path(@company), class: "btn btn-primary" do %>
+            <i data-feather="plus"></i>&nbsp; New post
+          <% end %>
         <% end %>
       </div>
     </div>
@@ -50,7 +52,9 @@
                 <td><%= l(p.scheduled_at, format: :short) if p.scheduled_at %></td>
                 <td><%= p.author.display_name %></td>
                 <td class="text-end">
-                  <%= link_to "Edit", edit_company_post_path(@company, p), class: "btn btn-sm btn-outline-secondary" %>
+                  <% if current_membership&.can_publish? %>
+                    <%= link_to "Edit", edit_company_post_path(@company, p), class: "btn btn-sm btn-outline-secondary" %>
+                  <% end %>
                 </td>
               </tr>
             <% end %>
