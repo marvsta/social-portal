@@ -1,6 +1,7 @@
 class CompaniesController < ApplicationController
   before_action :load_company, only: %i[show edit update switch]
   before_action :require_membership, only: %i[show edit update switch]
+  before_action :require_manager, only: %i[edit update]
 
   def index
     @companies = current_user.companies.order(:name)

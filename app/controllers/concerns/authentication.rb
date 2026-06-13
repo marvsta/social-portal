@@ -2,7 +2,7 @@ module Authentication
   extend ActiveSupport::Concern
 
   included do
-    helper_method :current_user, :current_session, :current_company, :signed_in?
+    helper_method :current_user, :current_session, :current_company, :current_membership, :signed_in?
     before_action :require_login
   end
 
@@ -39,10 +39,31 @@ module Authentication
     end
   end
 
+  def current_membership
+    return @current_membership if defined?(@current_membership)
+    company = current_company
+    @current_membership = company && current_user&.memberships&.find_by(company_id: company.id)
+  end
+
   def require_login
     return if signed_in?
     session[:return_to] = request.fullpath if request.get?
     redirect_to login_path, alert: "Please sign in to continue."
+  end
+
+  # Authorization gates, keyed off the current membership's role.
+  # Manager == owner/admin; publisher == owner/admin/editor.
+  def require_manager
+    deny_access unless current_membership&.can_manage?
+  end
+
+  def require_publisher
+    deny_access unless current_membership&.can_publish?
+  end
+
+  def deny_access
+    redirect_back fallback_location: companies_path,
+      alert: "You don't have permission to do that."
   end
 
   def sign_in(user)

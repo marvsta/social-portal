@@ -27,11 +27,13 @@
                 <i data-feather="share-2"></i><span>Channels</span>
               <% end %>
             </li>
-            <li class="dropdown <%= 'active' if controller_name == 'companies' && action_name == 'edit' %>">
-              <%= link_to edit_company_path(current_company), class: "nav-link menu-title" do %>
-                <i data-feather="settings"></i><span>Company</span>
-              <% end %>
-            </li>
+            <% if current_membership&.can_manage? %>
+              <li class="dropdown <%= 'active' if controller_name == 'companies' && action_name == 'edit' %>">
+                <%= link_to edit_company_path(current_company), class: "nav-link menu-title" do %>
+                  <i data-feather="settings"></i><span>Company</span>
+                <% end %>
+              </li>
+            <% end %>
           <% else %>
             <li class="dropdown <%= 'active' if controller_name == 'companies' %>">
               <%= link_to companies_path, class: "nav-link menu-title" do %>

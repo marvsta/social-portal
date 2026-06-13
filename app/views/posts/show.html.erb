@@ -12,10 +12,12 @@
         </p>
       </div>
       <div class="col-sm-5 text-end">
-        <%= link_to "Edit", edit_company_post_path(@company, @post), class: "btn btn-outline-secondary btn-sm" %>
-        <%= button_to "Delete", company_post_path(@company, @post), method: :delete,
-              class: "btn btn-outline-danger btn-sm",
-              form: { class: "d-inline", data: { turbo_confirm: "Delete this post?" } } %>
+        <% if current_membership&.can_publish? %>
+          <%= link_to "Edit", edit_company_post_path(@company, @post), class: "btn btn-outline-secondary btn-sm" %>
+          <%= button_to "Delete", company_post_path(@company, @post), method: :delete,
+                class: "btn btn-outline-danger btn-sm",
+                form: { class: "d-inline", data: { turbo_confirm: "Delete this post?" } } %>
+        <% end %>
       </div>
     </div>
   </div>
@@ -95,15 +97,25 @@
           <div class="d-grid gap-2">
             <% case @post.status %>
             <% when "draft" %>
-              <%= button_to "Submit for review", submit_for_review_company_post_path(@company, @post), method: :post, class: "btn btn-warning" %>
+              <% if current_membership&.can_publish? %>
+                <%= button_to "Submit for review", submit_for_review_company_post_path(@company, @post), method: :post, class: "btn btn-warning" %>
+              <% end %>
             <% when "pending_review" %>
-              <%= button_to "Approve", approve_company_post_path(@company, @post), method: :post, class: "btn btn-success" %>
+              <% if current_membership&.can_manage? %>
+                <%= button_to "Approve", approve_company_post_path(@company, @post), method: :post, class: "btn btn-success" %>
+              <% else %>
+                <p class="small text-muted mb-0">Waiting on an admin to approve.</p>
+              <% end %>
             <% when "approved" %>
-              <%= button_to "Schedule", schedule_company_post_path(@company, @post), method: :post, class: "btn btn-primary",
-                    form: { data: { turbo_confirm: "Schedule for #{@post.scheduled_at ? l(@post.scheduled_at, format: :long) : 'now'}?" } } %>
+              <% if current_membership&.can_publish? %>
+                <%= button_to "Schedule", schedule_company_post_path(@company, @post), method: :post, class: "btn btn-primary",
+                      form: { data: { turbo_confirm: "Schedule for #{@post.scheduled_at ? l(@post.scheduled_at, format: :long) : 'now'}?" } } %>
+              <% end %>
             <% when "scheduled", "failed", "partial_failure" %>
-              <%= button_to "Publish now", publish_now_company_post_path(@company, @post), method: :post, class: "btn btn-primary",
-                    form: { data: { turbo_confirm: "Publish to all selected channels right now?" } } %>
+              <% if current_membership&.can_publish? %>
+                <%= button_to "Publish now", publish_now_company_post_path(@company, @post), method: :post, class: "btn btn-primary",
+                      form: { data: { turbo_confirm: "Publish to all selected channels right now?" } } %>
+              <% end %>
             <% end %>
             <%= link_to "View metrics", company_post_metrics_path(@company, @post), class: "btn btn-outline-primary" %>
           </div>
