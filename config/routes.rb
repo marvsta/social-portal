@@ -8,6 +8,11 @@ Rails.application.routes.draw do
   get  "signup", to: "registrations#new", as: :signup
   post "signup", to: "registrations#create"
 
+  # Global AI settings (provider + model used for every AI call, all companies)
+  get   "ai_settings",      to: "ai_settings#show",   as: :ai_settings
+  patch "ai_settings",      to: "ai_settings#update"
+  post  "ai_settings/test", to: "ai_settings#test",   as: :test_ai_settings
+
   # Companies
   resources :companies, only: %i[index new create show edit update] do
     member do
@@ -21,6 +26,9 @@ Rails.application.routes.draw do
       end
     end
     resources :posts do
+      collection do
+        post :generate_caption
+      end
       member do
         post :submit_for_review
         post :approve

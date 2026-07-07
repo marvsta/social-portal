@@ -94,6 +94,19 @@ before running the server, so `rails_blob_url` resolves to a URL Meta can fetch.
 
 In production, mount Active Storage on a public bucket (S3, GCS) and the URL is generated automatically.
 
+## AI caption generation
+
+The post form has an "AI caption assistant" that turns plain-language instructions into a caption + hashtags. The provider and model are chosen globally (all companies) on the **AI Settings** screen (`/ai_settings`, sidebar link) — Anthropic (Claude) and OpenAI (GPT) are supported. Only users who are owner/admin of at least one company can change them.
+
+Set the key(s) for the provider(s) you want before starting the server:
+
+```bash
+export ANTHROPIC_API_KEY=sk-ant-...
+export OPENAI_API_KEY=sk-...
+```
+
+Without a key, the rest of the app works normally — the assistant just shows a "not configured" message. Use the "Test connection" button on the settings screen to verify a key/model without writing a post.
+
 ## Running background jobs
 
 Solid Queue is included. For local dev:

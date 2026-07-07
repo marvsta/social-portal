@@ -1,7 +1,7 @@
 class PostsController < ApplicationController
   include CompanyScoped
 
-  before_action :require_publisher, only: %i[new create edit update destroy submit_for_review schedule publish_now]
+  before_action :require_publisher, only: %i[new create edit update destroy submit_for_review schedule publish_now generate_caption]
   before_action :require_manager, only: %i[approve]
   before_action :load_post, only: %i[show edit update destroy submit_for_review approve schedule publish_now]
 
@@ -86,6 +86,20 @@ class PostsController < ApplicationController
     @post.channel_posts.where(status: %w[pending failed]).update_all(status: "pending")
     Posts::PublishJob.perform_later(@post.id, force: true)
     redirect_to company_post_path(@company, @post), notice: "Publishing now."
+  end
+
+  def generate_caption
+    result = Ai::CaptionGenerator.new(
+      company: @company,
+      instructions: params[:instructions],
+      platforms: Array(params[:platforms]),
+      title: params[:title]
+    ).generate
+    render json: result
+  rescue Ai::NotConfigured => e
+    render json: { error: "AI isn't configured yet — #{e.message}. Set the key and restart the server, or pick a different provider in AI settings." }, status: :service_unavailable
+  rescue Ai::Error => e
+    render json: { error: e.message }, status: :unprocessable_content
   end
 
   private

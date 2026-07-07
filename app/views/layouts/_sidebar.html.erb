@@ -41,6 +41,11 @@
               <% end %>
             </li>
           <% end %>
+          <li class="dropdown <%= 'active' if controller_name == 'ai_settings' %>">
+            <%= link_to ai_settings_path, class: "nav-link menu-title" do %>
+              <i data-feather="cpu"></i><span>AI Settings</span>
+            <% end %>
+          </li>
         </ul>
       </div>
     </div>

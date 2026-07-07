@@ -1,0 +1,136 @@
+<% content_for :title, "AI settings" %>
+<div class="container-fluid">
+  <div class="page-header">
+    <div class="row">
+      <div class="col-sm-8">
+        <h3>AI settings</h3>
+        <p class="text-muted mb-0">
+          Choose which provider and model powers AI features (like the caption assistant) across <strong>all companies</strong>.
+          API keys are read from the server's environment — they are never stored in the database.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <% if @setting.errors.any? %>
+    <div class="alert alert-danger"><%= @setting.errors.full_messages.to_sentence %></div>
+  <% end %>
+
+  <%= form_with model: @setting, url: ai_settings_path, method: :patch, local: true do |f| %>
+    <div class="row">
+      <% Ai::Providers.keys.each do |key| %>
+        <% configured = Ai::Providers.configured?(key) %>
+        <% active = @setting.ai_provider == key %>
+        <div class="col-md-6 mb-3">
+          <label class="card h-100 ai-provider-card <%= 'border-primary' if active %>" style="cursor:pointer;<%= 'border-width:2px;' if active %>" for="provider_<%= key %>">
+            <div class="card-body">
+              <div class="d-flex align-items-center justify-content-between mb-2">
+                <div class="form-check mb-0">
+                  <%= f.radio_button :ai_provider, key, id: "provider_#{key}", class: "form-check-input ai-provider-radio", disabled: !@can_edit %>
+                  <span class="form-check-label fw-bold"><%= Ai::Providers.label(key) %></span>
+                </div>
+                <% if configured %>
+                  <span class="badge bg-success">API key detected</span>
+                <% else %>
+                  <span class="badge bg-warning text-dark">No API key</span>
+                <% end %>
+              </div>
+              <div class="mb-2">
+                <label class="form-label small text-muted mb-1" for="model_<%= key %>">Model</label>
+                <%= select_tag "app_setting[ai_model]",
+                      options_for_select(Ai::Providers.models(key), active ? @setting.ai_model_or_default : Ai::Providers.default_model(key)),
+                      id: "model_#{key}", class: "form-select ai-model-select", data: { provider: key },
+                      disabled: !active || !@can_edit %>
+              </div>
+              <small class="text-muted">
+                Key env var: <code><%= Ai::Providers.env_key(key) %></code>
+                <% unless configured %> — set it and restart the server to use this provider.<% end %>
+              </small>
+            </div>
+          </label>
+        </div>
+      <% end %>
+    </div>
+
+    <div class="d-flex align-items-center gap-2">
+      <% if @can_edit %>
+        <%= f.submit "Save settings", class: "btn btn-primary" %>
+        <button type="button" id="ai_test_btn" class="btn btn-outline-primary">
+          <span id="ai_test_spinner" class="spinner-border spinner-border-sm me-1 d-none" role="status"></span>
+          Test connection
+        </button>
+      <% else %>
+        <span class="text-muted">Only company owners/admins can change AI settings.</span>
+      <% end %>
+      <span id="ai_test_result" class="small"></span>
+    </div>
+  <% end %>
+
+  <div class="card mt-4">
+    <div class="card-body py-3">
+      <h6 class="mb-1">Currently active</h6>
+      <span class="badge" style="background:#7366FF;font-size:0.85rem;">
+        <%= Ai::Providers.label(@setting.ai_provider) %> · <%= @setting.ai_model_or_default %>
+      </span>
+      <small class="text-muted d-block mt-2">
+        "Test connection" sends one tiny request with the <em>saved</em> settings — save first, then test.
+      </small>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function() {
+    document.querySelectorAll(".ai-provider-radio").forEach(function(radio) {
+      if (radio.dataset.bound) return;
+      radio.dataset.bound = "1";
+      radio.addEventListener("change", function() {
+        // Only the selected provider's model select may submit (they share a name).
+        document.querySelectorAll(".ai-model-select").forEach(function(sel) {
+          sel.disabled = sel.dataset.provider !== radio.value;
+        });
+        document.querySelectorAll(".ai-provider-card").forEach(function(card) {
+          card.classList.remove("border-primary");
+          card.style.borderWidth = "";
+        });
+        var card = radio.closest(".ai-provider-card");
+        card.classList.add("border-primary");
+        card.style.borderWidth = "2px";
+      });
+    });
+
+    var testBtn = document.getElementById("ai_test_btn");
+    if (testBtn && !testBtn.dataset.bound) {
+      testBtn.dataset.bound = "1";
+      testBtn.addEventListener("click", function() {
+        var spinner = document.getElementById("ai_test_spinner");
+        var result = document.getElementById("ai_test_result");
+        testBtn.disabled = true;
+        spinner.classList.remove("d-none");
+        result.textContent = "";
+        fetch("<%= test_ai_settings_path %>", {
+          method: "POST",
+          headers: { "X-CSRF-Token": document.querySelector("meta[name='csrf-token']").content }
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (data.ok) {
+            result.className = "small text-success";
+            result.textContent = "✓ " + data.provider + " · " + data.model + " responded: “" + data.reply + "”";
+          } else {
+            result.className = "small text-danger";
+            result.textContent = "✗ " + data.error;
+          }
+        })
+        .catch(function() {
+          result.className = "small text-danger";
+          result.textContent = "✗ Request failed.";
+        })
+        .finally(function() {
+          testBtn.disabled = false;
+          spinner.classList.add("d-none");
+        });
+      });
+    }
+  })();
+</script>
