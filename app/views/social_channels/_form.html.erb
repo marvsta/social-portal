@@ -30,7 +30,7 @@
     <div class="col-12 mb-3">
       <%= f.label :access_token, "Long-lived access token", class: "form-label" %>
       <%= f.text_area :access_token, class: "form-control", rows: 3, placeholder: "Paste your Meta Graph API token (Instagram only, scoped: instagram_content_publish, instagram_basic, pages_read_engagement)" %>
-      <small class="text-muted">For Instagram, this token must come from a Facebook Page connected to a Business Instagram account. See README for setup steps.</small>
+      <small class="text-muted">For Instagram, this token must come from a Facebook Page connected to a Business Instagram account. <%= link_to "See the Instagram setup guide", instagram_setup_company_social_channels_path(@company) %> for step-by-step instructions.</small>
     </div>
   </div>
   <%= f.submit submit_label, class: "btn btn-primary" %>

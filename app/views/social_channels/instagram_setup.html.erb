@@ -1,0 +1,414 @@
+<% content_for :title, "Instagram setup · #{@company.name}" %>
+<% content_for :head do %>
+  <style>
+    .setup-hero {
+      background: linear-gradient(135deg, #E1306C 0%, #833AB4 50%, #5851DB 100%);
+      color: #fff; border-radius: 12px; padding: 2.5rem 2rem; margin-bottom: 1.5rem;
+      position: relative; overflow: hidden;
+    }
+    .setup-hero::after {
+      content: ""; position: absolute; right: -60px; top: -60px;
+      width: 240px; height: 240px; border-radius: 50%; background: rgba(255,255,255,.08);
+    }
+    .setup-hero h2 { font-weight: 800; margin-bottom: .25rem; }
+    .setup-hero p { opacity: .9; margin-bottom: 0; max-width: 720px; }
+    .setup-hero .badge { background: rgba(255,255,255,.18); color: #fff; font-weight: 500; }
+
+    .setup-nav { position: sticky; top: 88px; }
+    .setup-nav .card-body { padding: .75rem 0; }
+    .setup-nav a {
+      display: block; padding: .5rem 1rem; color: #6c757d;
+      text-decoration: none; font-size: .85rem; border-left: 3px solid transparent;
+    }
+    .setup-nav a:hover { color: #7366ff; background: #f8f9fc; }
+    .setup-nav a.active { color: #7366ff; border-left-color: #7366ff; font-weight: 600; background: #f8f9fc; }
+    .setup-nav .nav-section { font-size: .7rem; text-transform: uppercase; letter-spacing: .06em; color: #adb5bd; padding: .75rem 1rem .25rem; }
+
+    .step-card { border: 1px solid #eef0f3; border-radius: 10px; padding: 1.5rem; margin-bottom: 1rem; background: #fff; }
+    .step-card h5 { display: flex; align-items: center; gap: .65rem; margin-bottom: .85rem; }
+    .step-num {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 30px; height: 30px; border-radius: 50%;
+      background: #7366ff; color: #fff; font-weight: 700; font-size: .85rem;
+      flex-shrink: 0;
+    }
+    .step-card p, .step-card li { color: #4d5258; line-height: 1.6; }
+    .step-card .substep {
+      background: #f8f9fc; border-left: 3px solid #7366ff;
+      padding: .85rem 1rem; border-radius: 0 6px 6px 0; margin: .85rem 0;
+    }
+    .step-card .substep strong { color: #2c323f; }
+    .step-card code:not(pre code) {
+      background: #fef2f7; color: #c2185b; padding: .12rem .4rem;
+      border-radius: 4px; font-size: .85em; font-weight: 500;
+    }
+
+    .code-block { position: relative; margin: .85rem 0; }
+    .code-block pre {
+      background: #1e2130; color: #e4e8f0; padding: 1rem 1.1rem; border-radius: 8px;
+      font-size: .8rem; line-height: 1.55; overflow-x: auto; margin: 0;
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, monospace;
+    }
+    .code-block pre code { background: transparent; color: inherit; padding: 0; }
+    .code-block .copy-btn {
+      position: absolute; top: .55rem; right: .55rem;
+      background: rgba(255,255,255,.08); color: #e4e8f0; border: 0;
+      border-radius: 5px; padding: .25rem .55rem; font-size: .7rem; cursor: pointer;
+      transition: background .15s;
+    }
+    .code-block .copy-btn:hover { background: rgba(255,255,255,.18); }
+    .code-block .copy-btn.copied { background: #2e7d32; }
+
+    .perm-list { display: flex; flex-wrap: wrap; gap: .4rem; margin: .5rem 0; }
+    .perm-list code { font-size: .78rem; }
+
+    .gotcha-item {
+      border-left: 3px solid #ff9f43; padding: .85rem 1rem;
+      background: #fff8ee; border-radius: 0 6px 6px 0; margin-bottom: .65rem;
+    }
+    .gotcha-item strong { color: #b25b00; }
+
+    .req-checklist { list-style: none; padding-left: 0; margin: 0; }
+    .req-checklist li {
+      display: flex; align-items: flex-start; gap: .65rem;
+      padding: .45rem 0; font-size: .9rem;
+    }
+    .req-checklist li i {
+      color: #2e7d32; flex-shrink: 0; margin-top: 2px;
+    }
+
+    .cta-card {
+      background: linear-gradient(135deg, #2c323f 0%, #444b5c 100%);
+      color: #fff; border-radius: 10px; padding: 1.5rem; margin-top: 1rem;
+    }
+    .cta-card h5 { color: #fff; margin-bottom: .35rem; }
+    .cta-card p { color: rgba(255,255,255,.8); margin-bottom: 1rem; }
+
+    .pipeline {
+      display: flex; align-items: center; gap: .5rem; flex-wrap: wrap;
+      background: #f8f9fc; padding: .85rem 1rem; border-radius: 8px; margin: .85rem 0;
+      font-size: .8rem;
+    }
+    .pipeline .step { background: #fff; padding: .35rem .7rem; border-radius: 5px; border: 1px solid #e6edef; font-weight: 500; }
+    .pipeline .arrow { color: #adb5bd; }
+  </style>
+<% end %>
+
+<div class="container-fluid">
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb mb-0">
+      <li class="breadcrumb-item"><%= link_to "Channels", company_social_channels_path(@company) %></li>
+      <li class="breadcrumb-item active" aria-current="page">Instagram setup guide</li>
+    </ol>
+  </nav>
+
+  <div class="setup-hero">
+    <span class="badge mb-2">Auto-publish · Instagram only</span>
+    <h2>Connect Instagram for automatic publishing</h2>
+    <p>This walks you through getting Meta credentials, plugging them into <%= @company.name %>, and making the first auto-published post work end-to-end. Plan for about 15 minutes.</p>
+  </div>
+
+  <div class="row">
+    <div class="col-lg-3 mb-4 d-none d-lg-block">
+      <div class="card setup-nav">
+        <div class="card-body">
+          <div class="nav-section">On this page</div>
+          <a href="#requirements" class="active">Before you start</a>
+          <div class="nav-section">A. Meta side</div>
+          <a href="#ig-business">1. Business/Creator account</a>
+          <a href="#link-page">2. Link to Facebook Page</a>
+          <a href="#meta-app">3. Create Meta app</a>
+          <a href="#token">4. Generate access token</a>
+          <a href="#ig-id">5. Get Instagram Business ID</a>
+          <div class="nav-section">B. Portal side</div>
+          <a href="#connect-channel">6. Connect the channel</a>
+          <div class="nav-section">C. Runtime</div>
+          <a href="#public-url">7. Public media URL</a>
+          <a href="#worker">8. Job worker</a>
+          <div class="nav-section">D. Publish</div>
+          <a href="#publish-post">9. Send your first post</a>
+          <div class="nav-section">Reference</div>
+          <a href="#gotchas">Common gotchas</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-9">
+      <!-- ============ Requirements ============ -->
+      <div class="step-card" id="requirements">
+        <h5><i class="fa fa-check-circle text-success"></i> Before you start</h5>
+        <p class="mb-2">You'll need:</p>
+        <ul class="req-checklist">
+          <li><i class="fa fa-check"></i><div>An <strong>Instagram Business or Creator</strong> account (not a personal one)</div></li>
+          <li><i class="fa fa-check"></i><div>A <strong>Facebook Page</strong> linked to that Instagram account (Meta routes the API through the Page)</div></li>
+          <li><i class="fa fa-check"></i><div>A <strong>Meta Developer account</strong> at <a href="https://developers.facebook.com" target="_blank" rel="noopener">developers.facebook.com</a> (free)</div></li>
+          <li><i class="fa fa-check"></i><div>Access to a terminal for two short <code>curl</code> commands</div></li>
+        </ul>
+      </div>
+
+      <!-- ============ A. Meta side ============ -->
+      <h4 class="mt-4 mb-3 text-muted text-uppercase fw-bold" style="font-size:.8rem;letter-spacing:.08em;">A. Meta side — get the credentials</h4>
+
+      <div class="step-card" id="ig-business">
+        <h5><span class="step-num">1</span> Convert Instagram to Business or Creator</h5>
+        <p>Open the Instagram app on your phone. Tap your profile picture → <strong>Settings and privacy</strong> → <strong>Account type and tools</strong> → <strong>Switch to professional account</strong> → pick <strong>Business</strong> or <strong>Creator</strong>.</p>
+        <p class="text-muted mb-0"><small>Personal accounts cannot use the Graph API — this step is mandatory.</small></p>
+      </div>
+
+      <div class="step-card" id="link-page">
+        <h5><span class="step-num">2</span> Link it to a Facebook Page</h5>
+        <p>The Graph API talks to Instagram <em>through</em> a Facebook Page. In Instagram: <strong>Settings</strong> → <strong>Account Center</strong> → <strong>Accounts</strong> → connect your Facebook Page.</p>
+        <p class="mb-0">No Page yet? Create one at <a href="https://www.facebook.com/pages/create" target="_blank" rel="noopener">facebook.com/pages/create</a> first.</p>
+      </div>
+
+      <div class="step-card" id="meta-app">
+        <h5><span class="step-num">3</span> Create a Meta app</h5>
+        <ol>
+          <li>Go to <a href="https://developers.facebook.com/apps" target="_blank" rel="noopener">developers.facebook.com/apps</a> → <strong>Create App</strong></li>
+          <li>Pick the <strong>Business</strong> use case</li>
+          <li>Name it (e.g. "<%= @company.name %> Social Portal") and submit</li>
+          <li>From the new app's dashboard → <strong>Add Products</strong> → add <strong>Instagram Graph API</strong></li>
+        </ol>
+        <div class="substep">
+          <strong>Save these two values</strong> from <em>App settings → Basic</em> — you'll need them in step 4:
+          <ul class="mb-0 mt-1"><li><code>App ID</code></li><li><code>App Secret</code> (click "Show")</li></ul>
+        </div>
+      </div>
+
+      <div class="step-card" id="token">
+        <h5><span class="step-num">4</span> Generate a long-lived access token</h5>
+        <p>Open the <a href="https://developers.facebook.com/tools/explorer" target="_blank" rel="noopener">Graph API Explorer</a>.</p>
+        <ul>
+          <li><strong>Meta App:</strong> pick the app from step 3</li>
+          <li><strong>User or Page:</strong> "Get User Access Token"</li>
+          <li><strong>Permissions:</strong> check exactly these four:</li>
+        </ul>
+        <div class="perm-list">
+          <code>instagram_basic</code>
+          <code>instagram_content_publish</code>
+          <code>pages_read_engagement</code>
+          <code>pages_show_list</code>
+        </div>
+        <p>Click <strong>Generate Access Token</strong> and approve in the Facebook popup. This token lasts 1 hour — convert it to a long-lived (60-day) token:</p>
+
+        <div class="code-block">
+          <button type="button" class="copy-btn" data-copy>Copy</button>
+<pre><code>curl "https://graph.facebook.com/v19.0/oauth/access_token?\
+grant_type=fb_exchange_token&\
+client_id=&lt;APP_ID&gt;&amp;\
+client_secret=&lt;APP_SECRET&gt;&amp;\
+fb_exchange_token=&lt;SHORT_LIVED_TOKEN&gt;"</code></pre>
+        </div>
+
+        <p>Now exchange that for a <strong>Page</strong> access token — that's the one the portal needs:</p>
+
+        <div class="code-block">
+          <button type="button" class="copy-btn" data-copy>Copy</button>
+<pre><code>curl "https://graph.facebook.com/v19.0/me/accounts?\
+access_token=&lt;LONG_LIVED_USER_TOKEN&gt;"</code></pre>
+        </div>
+
+        <div class="substep">
+          The response lists your Pages. Find the one linked to Instagram and copy its <code>access_token</code> field. <strong>This is the token to paste into the portal.</strong>
+        </div>
+      </div>
+
+      <div class="step-card" id="ig-id">
+        <h5><span class="step-num">5</span> Get the Instagram Business Account ID</h5>
+        <p>Replace <code>&lt;PAGE_ID&gt;</code> with your Facebook Page's numeric ID:</p>
+
+        <div class="code-block">
+          <button type="button" class="copy-btn" data-copy>Copy</button>
+<pre><code>curl "https://graph.facebook.com/v19.0/&lt;PAGE_ID&gt;?\
+fields=instagram_business_account&amp;\
+access_token=&lt;PAGE_TOKEN&gt;"</code></pre>
+        </div>
+
+        <p class="mb-0">The response looks like <code>{ "instagram_business_account": { "id": "17841401234567890" } }</code>. Save that <strong>17-digit number</strong>.</p>
+      </div>
+
+      <!-- ============ B. Portal side ============ -->
+      <h4 class="mt-4 mb-3 text-muted text-uppercase fw-bold" style="font-size:.8rem;letter-spacing:.08em;">B. Portal side</h4>
+
+      <div class="step-card" id="connect-channel">
+        <h5><span class="step-num">6</span> Connect the channel in the portal</h5>
+        <% if @existing_ig_channel %>
+          <div class="alert alert-info d-flex align-items-center gap-2 mb-3">
+            <i class="fa fa-info-circle"></i>
+            <div>
+              You already have an Instagram channel for <strong><%= @existing_ig_channel.display %></strong>.
+              <% if @existing_ig_channel.supports_auto_publish? %>
+                It's marked auto-publish ready.
+              <% else %>
+                It's missing token or business account ID — <%= link_to "edit it", edit_company_social_channel_path(@company, @existing_ig_channel), class: "fw-medium" %> to fill in the values from steps 4 &amp; 5.
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+        <ol>
+          <li>Go to <%= link_to "Channels", company_social_channels_path(@company) %> → <strong>Connect channel</strong></li>
+          <li>Fill in the form:
+            <ul class="mt-2">
+              <li><strong>Platform:</strong> Instagram</li>
+              <li><strong>Status:</strong> active</li>
+              <li><strong>Handle:</strong> your IG handle (e.g. <code>@<%= @company.slug %></code>)</li>
+              <li><strong>Display name:</strong> the brand name to show in the calendar</li>
+              <li><strong>Instagram Business Account ID:</strong> the 17-digit number from step 5</li>
+              <li><strong>Long-lived access token:</strong> the Page token from step 4</li>
+            </ul>
+          </li>
+          <li>Save. The channel should now show a green <span class="badge bg-success">Auto-publish ready</span> badge.</li>
+        </ol>
+        <% if current_membership&.can_manage? %>
+          <%= link_to new_company_social_channel_path(@company, platform: "instagram"), class: "btn btn-primary mt-2" do %>
+            <i class="fa fa-instagram me-1"></i> Open the Instagram channel form
+          <% end %>
+        <% end %>
+      </div>
+
+      <!-- ============ C. Runtime ============ -->
+      <h4 class="mt-4 mb-3 text-muted text-uppercase fw-bold" style="font-size:.8rem;letter-spacing:.08em;">C. Runtime — make it actually publish</h4>
+
+      <div class="step-card" id="public-url">
+        <h5><span class="step-num">7</span> Expose a public media URL</h5>
+        <p>Instagram doesn't accept file uploads — it <em>fetches</em> your image from a URL. In development that means tunneling localhost. With <a href="https://ngrok.com" target="_blank" rel="noopener">ngrok</a>:</p>
+        <div class="code-block">
+          <button type="button" class="copy-btn" data-copy>Copy</button>
+<pre><code>brew install ngrok
+ngrok config add-authtoken &lt;YOUR_TOKEN&gt;
+ngrok http 3000</code></pre>
+        </div>
+        <p>Copy the <code>https://…ngrok-free.app</code> URL it gives you.</p>
+
+        <div class="substep">
+          <strong>Whitelist that host</strong> in <code>config/environments/development.rb</code>:
+          <div class="code-block mt-2">
+            <button type="button" class="copy-btn" data-copy>Copy</button>
+<pre><code>config.hosts &lt;&lt; /.*\.ngrok-free\.app/</code></pre>
+          </div>
+        </div>
+
+        <p class="mb-0">Then boot the server with <code>APP_HOST</code> pointing at it:</p>
+        <div class="code-block">
+          <button type="button" class="copy-btn" data-copy>Copy</button>
+<pre><code>APP_HOST=https://abcd-12-34.ngrok-free.app bin/rails server</code></pre>
+        </div>
+        <p class="text-muted mb-0"><small>In production (Heroku, etc.) just set <code>APP_HOST</code> to your real domain — no tunnel needed.</small></p>
+      </div>
+
+      <div class="step-card" id="worker">
+        <h5><span class="step-num">8</span> Start the job worker</h5>
+        <p>Publishing runs as a background job (Solid Queue). In a separate terminal:</p>
+        <div class="code-block">
+          <button type="button" class="copy-btn" data-copy>Copy</button>
+<pre><code>bin/jobs</code></pre>
+        </div>
+        <p class="mb-0">On Heroku, add a worker dyno to your <code>Procfile</code>: <code>worker: bundle exec rails solid_queue:start</code> and scale it with <code>heroku ps:scale worker=1</code>.</p>
+      </div>
+
+      <!-- ============ D. Publish ============ -->
+      <h4 class="mt-4 mb-3 text-muted text-uppercase fw-bold" style="font-size:.8rem;letter-spacing:.08em;">D. Send your first post</h4>
+
+      <div class="step-card" id="publish-post">
+        <h5><span class="step-num">9</span> Schedule or publish a post</h5>
+        <ol>
+          <li><%= link_to "Create a new post", new_company_post_path(@company), class: "fw-medium" %> → attach an image → check the Instagram channel</li>
+          <li>Set a <strong>Scheduled at</strong> time (or skip it to publish immediately)</li>
+          <li>Walk it through the workflow:</li>
+        </ol>
+        <div class="pipeline">
+          <span class="step">draft</span><span class="arrow">→</span>
+          <span class="step">pending review</span><span class="arrow">→</span>
+          <span class="step">approved</span><span class="arrow">→</span>
+          <span class="step">scheduled</span><span class="arrow">→</span>
+          <span class="step" style="background:#2e7d32;color:#fff;border-color:#2e7d32;">published</span>
+        </div>
+        <p>Watch the post detail page — the channel row transitions <code>pending</code> → <code>publishing</code> → <code>published</code> and a real Instagram permalink appears in <strong>External URL</strong>.</p>
+
+        <div class="substep">
+          <strong>What happens behind the scenes</strong>
+          <ol class="mb-0 mt-1" style="font-size:.88rem;">
+            <li><code>Posts::PublishJob</code> picks up the scheduled post</li>
+            <li><code>POST /{ig_user_id}/media</code> with your public image URL + caption → returns a <code>creation_id</code></li>
+            <li>For Reels/video: polls container <code>status_code</code> until <code>FINISHED</code></li>
+            <li><code>POST /{ig_user_id}/media_publish</code> with that <code>creation_id</code> → live on Instagram</li>
+            <li>30 minutes later, <code>Metrics::FetchInstagramJob</code> pulls insights into <code>post_metrics</code></li>
+          </ol>
+        </div>
+      </div>
+
+      <!-- ============ Gotchas ============ -->
+      <h4 class="mt-4 mb-3 text-muted text-uppercase fw-bold" id="gotchas" style="font-size:.8rem;letter-spacing:.08em;">Common gotchas</h4>
+
+      <div class="step-card">
+        <div class="gotcha-item">
+          <strong>"Media URL not reachable"</strong> — <code>APP_HOST</code> is wrong, ngrok died, or the ngrok host isn't whitelisted in <code>development.rb</code>.
+        </div>
+        <div class="gotcha-item">
+          <strong>Token expired</strong> — Page tokens technically don't expire while the user keeps their FB session active, but they can be revoked. Re-run step 4 to refresh.
+        </div>
+        <div class="gotcha-item">
+          <strong>"Application does not have permission for this action"</strong> — missing <code>instagram_content_publish</code> scope. Re-generate the token with <em>all four</em> permissions checked.
+        </div>
+        <div class="gotcha-item">
+          <strong>Videos failing silently</strong> — Instagram requires MP4, H.264, AAC, ≤ 90 seconds for Reels. Other formats are rejected at the container stage with no helpful message.
+        </div>
+        <div class="gotcha-item">
+          <strong>Nothing happens after "Schedule"</strong> — <code>bin/jobs</code> isn't running. Solid Queue only fires while the worker is alive.
+        </div>
+        <div class="gotcha-item mb-0">
+          <strong>App in development mode (Meta side)</strong> — your Meta app starts in dev mode and can only publish for users listed as testers/admins. To publish for any user, you need to submit for App Review (<code>instagram_content_publish</code> requires review for production).
+        </div>
+      </div>
+
+      <% if current_membership&.can_manage? %>
+        <div class="cta-card">
+          <h5>Ready to connect?</h5>
+          <p>If your Page token and Business Account ID are in hand, open the channel form and paste them in.</p>
+          <%= link_to new_company_social_channel_path(@company, platform: "instagram"), class: "btn btn-light" do %>
+            <i class="fa fa-plus me-1"></i> Connect Instagram channel
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<% content_for :scripts do %>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Copy buttons on code blocks
+      document.querySelectorAll('.copy-btn[data-copy]').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var code = btn.parentElement.querySelector('pre code');
+          if (!code) { return; }
+          var text = code.innerText;
+          if (navigator.clipboard) {
+            navigator.clipboard.writeText(text).then(function() {
+              btn.textContent = 'Copied';
+              btn.classList.add('copied');
+              setTimeout(function() { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 1400);
+            });
+          }
+        });
+      });
+
+      // Active section in sticky nav (scrollspy-lite)
+      var sections = Array.from(document.querySelectorAll('.step-card[id], h4[id]'));
+      var navLinks = document.querySelectorAll('.setup-nav a[href^="#"]');
+      function onScroll() {
+        var y = window.scrollY + 120;
+        var current = sections[0];
+        for (var i = 0; i < sections.length; i++) {
+          if (sections[i].offsetTop <= y) { current = sections[i]; }
+        }
+        if (!current) { return; }
+        navLinks.forEach(function(a) {
+          a.classList.toggle('active', a.getAttribute('href') === '#' + current.id);
+        });
+      }
+      window.addEventListener('scroll', onScroll, { passive: true });
+      onScroll();
+    });
+  </script>
+<% end %>

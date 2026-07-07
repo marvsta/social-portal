@@ -8,6 +8,10 @@ class SocialChannelsController < ApplicationController
     @channels = @company.social_channels.order(:platform, :handle)
   end
 
+  def instagram_setup
+    @existing_ig_channel = @company.social_channels.for_platform("instagram").first
+  end
+
   def new
     @channel = @company.social_channels.build(platform: params[:platform] || "instagram", status: "active")
   end

@@ -15,7 +15,11 @@ Rails.application.routes.draw do
     end
     resource :calendar, only: :show
     resource :dashboard, only: :show
-    resources :social_channels
+    resources :social_channels do
+      collection do
+        get :instagram_setup
+      end
+    end
     resources :posts do
       member do
         post :submit_for_review

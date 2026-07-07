@@ -7,6 +7,9 @@
         <p class="text-muted mb-0">Add the social accounts <%= @company.name %> publishes to.</p>
       </div>
       <div class="col-sm-6 text-end">
+        <%= link_to instagram_setup_company_social_channels_path(@company), class: "btn btn-outline-primary me-1" do %>
+          <i class="fa fa-instagram"></i>&nbsp; Instagram setup guide
+        <% end %>
         <% if current_membership&.can_manage? %>
           <%= link_to new_company_social_channel_path(@company), class: "btn btn-primary" do %>
             <i data-feather="plus"></i>&nbsp; Connect channel
@@ -24,6 +27,7 @@
         <p class="text-muted">Connect your first social account to start scheduling posts.</p>
         <% if current_membership&.can_manage? %>
           <%= link_to "Connect Instagram", new_company_social_channel_path(@company, platform: "instagram"), class: "btn btn-primary" %>
+          <%= link_to "Setup guide", instagram_setup_company_social_channels_path(@company), class: "btn btn-outline-primary ms-2" %>
         <% end %>
       </div>
     </div>
