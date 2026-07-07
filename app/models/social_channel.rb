@@ -40,4 +40,14 @@ class SocialChannel < ApplicationRecord
       "tiktok"    => "#69C9D0"
     }[platform] || "#7366FF"
   end
+
+  def platform_icon_class
+    {
+      "instagram" => "fa fa-instagram",
+      "facebook"  => "fa fa-facebook",
+      "linkedin"  => "fa fa-linkedin",
+      "twitter"   => "fa fa-twitter",
+      "tiktok"    => "fa fa-music"
+    }[platform] || "fa fa-hashtag"
+  end
 end

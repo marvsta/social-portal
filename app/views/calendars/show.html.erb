@@ -1,11 +1,50 @@
 <% content_for :title, "#{@company.name} · Calendar" %>
 <% content_for :head do %>
-  <link rel="stylesheet" type="text/css" href="/theme/css/calendar.css">
   <style>
-    .fc .fc-toolbar-title { font-size: 1.25rem; font-weight: 700; }
-    .fc-event { cursor: pointer; padding: 2px 4px; }
-    .fc-daygrid-event { white-space: normal; }
-    .legend-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 6px; }
+    .calendar-view-toggle .btn { padding: .35rem .9rem; font-weight: 500; }
+    #calendar { font-family: inherit; }
+    .fc .fc-toolbar { margin-bottom: 1rem; }
+    .fc .fc-toolbar-title { font-size: 1.15rem; font-weight: 700; }
+    .fc .fc-button {
+      background: #fff; color: #2c323f; border: 1px solid #e6edef;
+      box-shadow: none; padding: .3rem .65rem; font-weight: 500; font-size: .8rem;
+      text-transform: capitalize;
+    }
+    .fc .fc-button:hover { background: #f4f5f9; color: #2c323f; }
+    .fc .fc-button-primary:not(:disabled).fc-button-active,
+    .fc .fc-button-primary:not(:disabled):active { background: #7366ff; color: #fff; border-color: #7366ff; }
+    .fc .fc-daygrid-day.fc-day-today { background: rgba(115, 102, 255, 0.06); }
+    .fc-event { border: 0 !important; background: transparent !important; padding: 0 !important; cursor: pointer; }
+    .fc-event-chip {
+      display: flex; align-items: center; gap: 4px;
+      padding: 2px 6px; border-radius: 4px; color: #fff;
+      font-size: .72rem; line-height: 1.2; overflow: hidden;
+    }
+    .fc-event-chip .platform-icon { font-size: .8rem; flex-shrink: 0; }
+    .fc-event-chip .post-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1 1 auto; }
+    .legend-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 6px; vertical-align: middle; }
+
+    .calendar-list-view .day-group-header {
+      background: #f8f9fc; padding: .5rem 1rem; font-weight: 600;
+      font-size: .78rem; color: #6c757d; text-transform: uppercase; letter-spacing: .04em;
+      border-top: 1px solid #eef0f3; border-bottom: 1px solid #eef0f3;
+    }
+    .calendar-list-view .day-group-header:first-child { border-top: 0; }
+    .calendar-list-view .post-row {
+      padding: .85rem 1rem; display: flex; align-items: center; gap: .85rem;
+      border-bottom: 1px solid #eef0f3;
+    }
+    .calendar-list-view .post-row:last-child { border-bottom: 0; }
+    .calendar-list-view .post-time { width: 70px; flex-shrink: 0; font-size: .8rem; color: #6c757d; font-weight: 500; }
+    .calendar-list-view .post-platforms { display: inline-flex; gap: .3rem; flex-shrink: 0; }
+    .calendar-list-view .post-platforms .platform-icon {
+      width: 26px; height: 26px; border-radius: 50%; color: #fff;
+      display: inline-flex; align-items: center; justify-content: center; font-size: .8rem;
+    }
+    .calendar-list-view .post-meta { flex: 1 1 auto; min-width: 0; }
+    .calendar-list-view .post-meta a { color: #2c323f; font-weight: 500; text-decoration: none; }
+    .calendar-list-view .post-meta a:hover { color: #7366ff; }
+    .calendar-list-view .post-row .status-badge { font-size: .7rem; padding: .35em .65em; }
   </style>
 <% end %>
 
@@ -31,11 +70,54 @@
     <div class="col-xl-9 col-lg-8 mb-4">
       <div class="card">
         <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+            <div class="btn-group calendar-view-toggle" role="group" aria-label="View mode">
+              <button type="button" class="btn btn-primary" data-view="calendar">
+                <i class="fa fa-calendar me-1"></i> Calendar
+              </button>
+              <button type="button" class="btn btn-outline-primary" data-view="list">
+                <i class="fa fa-list me-1"></i> List
+              </button>
+            </div>
+            <small class="text-muted"><%= pluralize(@posts.size, "post") %> in this window</small>
+          </div>
+
           <div id="calendar"></div>
+
+          <div id="calendar-list" class="calendar-list-view" style="display:none;">
+            <% if @posts.empty? %>
+              <p class="text-muted text-center p-4 mb-0">No posts scheduled in this window.</p>
+            <% else %>
+              <% @posts.group_by { |p| p.scheduled_at.to_date }.each do |day, posts| %>
+                <div class="day-group-header"><%= day.strftime("%A, %B %-d, %Y") %></div>
+                <% posts.each do |p| %>
+                  <div class="post-row">
+                    <div class="post-time"><%= p.scheduled_at.strftime("%-l:%M %p") %></div>
+                    <div class="post-platforms">
+                      <% p.social_channels.each do |c| %>
+                        <span class="platform-icon" style="background: <%= c.platform_color %>;" title="<%= c.platform_label %>">
+                          <i class="<%= c.platform_icon_class %>"></i>
+                        </span>
+                      <% end %>
+                    </div>
+                    <div class="post-meta">
+                      <%= link_to (p.title.presence || p.caption.to_s.truncate(70)), company_post_path(@company, p) %>
+                      <div class="small text-muted">
+                        <%= p.social_channels.map(&:platform_label).join(" · ") %>
+                      </div>
+                    </div>
+                    <span class="badge status-badge" style="background: <%= p.status_color %>; color:white;">
+                      <%= p.status_label %>
+                    </span>
+                  </div>
+                <% end %>
+              <% end %>
+            <% end %>
+          </div>
+
           <div class="mt-3 small">
-            <% Post::STATUSES.each do |s| %>
-              <% next if %w[publishing partial_failure].exclude?(s) && %w[draft pending_review approved scheduled published failed].exclude?(s) %>
-              <span class="me-3">
+            <% %w[draft pending_review approved scheduled publishing published failed partial_failure].each do |s| %>
+              <span class="me-3 d-inline-block">
                 <span class="legend-dot" style="background: <%= Post.new(status: s).status_color %>"></span>
                 <%= Post.new(status: s).status_label %>
               </span>
@@ -92,32 +174,86 @@
 </div>
 
 <% content_for :scripts do %>
-  <script src="/theme/js/calendar/moment.min.js"></script>
-  <script src="/theme/js/calendar/fullcalendar.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', function() {
       var calEl = document.getElementById('calendar');
+      var listEl = document.getElementById('calendar-list');
       if (!calEl || typeof FullCalendar === 'undefined') { return; }
+
       var newPostBase = "<%= new_company_post_path(@company) %>";
       var canCreatePost = <%= current_membership&.can_publish? ? "true" : "false" %>;
+      var events = <%= raw @events.to_json %>;
+
+      function escapeHtml(str) {
+        return String(str).replace(/[&<>"']/g, function(c) {
+          return ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c];
+        });
+      }
+
       var calendar = new FullCalendar.Calendar(calEl, {
         initialView: 'dayGridMonth',
         height: 'auto',
-        headerToolbar: {
-          left: 'prev,next today',
-          center: 'title',
-          right: 'dayGridMonth,timeGridWeek,listWeek'
-        },
-        navLinks: true,
+        firstDay: 1,
+        headerToolbar: { left: 'prev,next today', center: 'title', right: '' },
         editable: false,
-        dayMaxEvents: true,
+        dayMaxEvents: 3,
+        moreLinkClick: 'popover',
+        events: events,
+        eventDisplay: 'block',
+        eventClick: function(info) {
+          if (info.event.url) {
+            info.jsEvent.preventDefault();
+            window.location.href = info.event.url;
+          }
+        },
+        eventContent: function(arg) {
+          var platforms = (arg.event.extendedProps && arg.event.extendedProps.platforms) || [];
+          var color = arg.event.backgroundColor || '#7366ff';
+          var html = '<div class="fc-event-chip" style="background:' + color + ';">';
+          platforms.forEach(function(p) {
+            html += '<i class="platform-icon ' + p.icon + '" title="' + escapeHtml(p.label) + '"></i>';
+          });
+          html += '<span class="post-title">' + escapeHtml(arg.event.title || '(untitled)') + '</span>';
+          html += '</div>';
+          return { html: html };
+        },
         dateClick: function(info) {
           if (!canCreatePost) { return; }
           window.location.href = newPostBase + '?scheduled_at=' + encodeURIComponent(info.dateStr + 'T09:00');
-        },
-        events: <%= raw @events.to_json %>
+        }
       });
       calendar.render();
+
+      var buttons = document.querySelectorAll('.calendar-view-toggle [data-view]');
+      function setView(view) {
+        buttons.forEach(function(b) {
+          b.classList.remove('btn-primary');
+          b.classList.add('btn-outline-primary');
+        });
+        var active = document.querySelector('.calendar-view-toggle [data-view="' + view + '"]');
+        if (active) {
+          active.classList.remove('btn-outline-primary');
+          active.classList.add('btn-primary');
+        }
+        if (view === 'list') {
+          calEl.style.display = 'none';
+          listEl.style.display = 'block';
+        } else {
+          calEl.style.display = 'block';
+          listEl.style.display = 'none';
+          calendar.updateSize();
+        }
+        try { localStorage.setItem('socialPortalCalendarView', view); } catch (e) {}
+      }
+
+      buttons.forEach(function(btn) {
+        btn.addEventListener('click', function() { setView(btn.dataset.view); });
+      });
+
+      var saved;
+      try { saved = localStorage.getItem('socialPortalCalendarView'); } catch (e) {}
+      if (saved === 'list') { setView('list'); }
     });
   </script>
 <% end %>

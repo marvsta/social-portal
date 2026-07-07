@@ -27,7 +27,10 @@ class CalendarsController < ApplicationController
       borderColor: post.status_color,
       extendedProps: {
         status: post.status_label,
-        channels: post.social_channels.map(&:platform_label).join(", ")
+        channels: post.social_channels.map(&:platform_label).join(", "),
+        platforms: post.social_channels.map { |c|
+          { name: c.platform, label: c.platform_label, color: c.platform_color, icon: c.platform_icon_class }
+        }
       }
     }
   end
