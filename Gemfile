@@ -21,7 +21,7 @@ gem "jbuilder"
 gem "bcrypt", "~> 3.1.7"
 
 # HTTP client for Instagram Graph API + other social platforms
-gem "faraday", "~> 2.9"
+gem "faraday", "~> 2.14"
 gem "faraday-multipart"
 
 # Active Storage on S3 in production
