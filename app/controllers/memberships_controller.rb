@@ -6,6 +6,9 @@ class MembershipsController < ApplicationController
 
   def index
     @memberships = @company.memberships.includes(:user).joins(:user).order("users.name, users.email")
+    # Platform admins have access to every company without a membership row;
+    # list them too so the table shows everyone who can actually get in.
+    @platform_admins = User.where(admin: true).where.not(id: @company.users.select(:id)).order(:name, :email)
   end
 
   def new

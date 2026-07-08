@@ -5,8 +5,9 @@ Rails.application.routes.draw do
   get  "login",  to: "sessions#new",     as: :login
   post "login",  to: "sessions#create"
   delete "logout", to: "sessions#destroy", as: :logout
-  get  "signup", to: "registrations#new", as: :signup
-  post "signup", to: "registrations#create"
+  # Public signup is disabled: accounts are created by admins/owners from a
+  # company's Users page, so every user is always assigned to a company.
+  # (Bootstrap the very first admin from a console — see README.)
 
   # Global AI settings (provider + model used for every AI call, all companies)
   get   "ai_settings",      to: "ai_settings#show",   as: :ai_settings

@@ -29,6 +29,27 @@
             </tr>
           </thead>
           <tbody>
+            <% @platform_admins.each do |u| %>
+              <tr style="background:#FDF7FA;">
+                <td class="ps-4">
+                  <div class="d-flex align-items-center">
+                    <span style="width:38px;height:38px;border-radius:50%;background:#E1306C;color:white;display:inline-flex;align-items:center;justify-content:center;font-weight:700;">
+                      <%= u.display_name[0].upcase %>
+                    </span>
+                    <div class="ms-3">
+                      <h6 class="mb-0">
+                        <%= u.display_name %>
+                        <% if u.id == current_user.id %><span class="badge bg-light text-dark">You</span><% end %>
+                      </h6>
+                      <small class="text-muted"><%= u.email %></small>
+                    </div>
+                  </div>
+                </td>
+                <td><span class="badge" style="background:#E1306C;">Platform admin</span></td>
+                <td><small class="text-muted">Access to all companies</small></td>
+                <% if can_manage_company? %><td class="text-end pe-4"></td><% end %>
+              </tr>
+            <% end %>
             <% @memberships.each do |m| %>
               <tr>
                 <td class="ps-4">
