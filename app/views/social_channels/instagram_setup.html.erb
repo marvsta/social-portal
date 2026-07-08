@@ -259,7 +259,7 @@ access_token=&lt;PAGE_TOKEN&gt;"</code></pre>
           </li>
           <li>Save. The channel should now show a green <span class="badge bg-success">Auto-publish ready</span> badge.</li>
         </ol>
-        <% if current_membership&.can_manage? %>
+        <% if can_manage_company? %>
           <%= link_to new_company_social_channel_path(@company, platform: "instagram"), class: "btn btn-primary mt-2" do %>
             <i class="fa fa-instagram me-1"></i> Open the Instagram channel form
           <% end %>
@@ -361,7 +361,7 @@ ngrok http 3000</code></pre>
         </div>
       </div>
 
-      <% if current_membership&.can_manage? %>
+      <% if can_manage_company? %>
         <div class="cta-card">
           <h5>Ready to connect?</h5>
           <p>If your Page token and Business Account ID are in hand, open the channel form and paste them in.</p>

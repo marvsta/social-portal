@@ -14,6 +14,7 @@ module CompanyScoped
   end
 
   def require_company_membership
+    return if current_user&.admin? # platform admins can access every company
     return if current_user&.member_of?(@company)
     redirect_to companies_path, alert: "You don't have access to that company."
   end

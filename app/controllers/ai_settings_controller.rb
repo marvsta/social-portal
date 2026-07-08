@@ -1,11 +1,10 @@
 class AiSettingsController < ApplicationController
-  # AI settings are global (all companies), so the gate is "manages at least
-  # one company" rather than a per-company role check.
-  before_action :require_any_manager, only: %i[update test]
+  # AI settings are platform-global, so only the platform admin changes them.
+  before_action :require_site_admin, only: %i[update test]
 
   def show
     @setting = AppSetting.current
-    @can_edit = any_manager?
+    @can_edit = current_user.admin?
   end
 
   def update
@@ -35,14 +34,6 @@ class AiSettingsController < ApplicationController
   end
 
   private
-
-  def any_manager?
-    current_user.memberships.exists?(role: %w[owner admin])
-  end
-
-  def require_any_manager
-    deny_access unless any_manager?
-  end
 
   def setting_params
     params.require(:app_setting).permit(:ai_provider, :ai_model, :image_model, :image_quality)

@@ -12,7 +12,7 @@
         </p>
       </div>
       <div class="col-sm-5 text-end">
-        <% if current_membership&.can_publish? %>
+        <% if can_publish_company? %>
           <%= link_to "Edit", edit_company_post_path(@company, @post), class: "btn btn-outline-secondary btn-sm" %>
           <%= button_to "Delete", company_post_path(@company, @post), method: :delete,
                 class: "btn btn-outline-danger btn-sm",
@@ -97,22 +97,22 @@
           <div class="d-grid gap-2">
             <% case @post.status %>
             <% when "draft" %>
-              <% if current_membership&.can_publish? %>
+              <% if can_publish_company? %>
                 <%= button_to "Submit for review", submit_for_review_company_post_path(@company, @post), method: :post, class: "btn btn-warning" %>
               <% end %>
             <% when "pending_review" %>
-              <% if current_membership&.can_manage? %>
+              <% if can_manage_company? %>
                 <%= button_to "Approve", approve_company_post_path(@company, @post), method: :post, class: "btn btn-success" %>
               <% else %>
                 <p class="small text-muted mb-0">Waiting on an admin to approve.</p>
               <% end %>
             <% when "approved" %>
-              <% if current_membership&.can_publish? %>
+              <% if can_publish_company? %>
                 <%= button_to "Schedule", schedule_company_post_path(@company, @post), method: :post, class: "btn btn-primary",
                       form: { data: { turbo_confirm: "Schedule for #{@post.scheduled_at ? l(@post.scheduled_at, format: :long) : 'now'}?" } } %>
               <% end %>
             <% when "scheduled", "failed", "partial_failure" %>
-              <% if current_membership&.can_publish? %>
+              <% if can_publish_company? %>
                 <%= button_to "Publish now", publish_now_company_post_path(@company, @post), method: :post, class: "btn btn-primary",
                       form: { data: { turbo_confirm: "Publish to all selected channels right now?" } } %>
               <% end %>

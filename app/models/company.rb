@@ -3,6 +3,10 @@ class Company < ApplicationRecord
   has_many :users, through: :memberships
   has_many :social_channels, dependent: :destroy
   has_many :posts, dependent: :destroy
+  # Users pointing at this company as their last-active one (users.current_company_id
+  # has a FK, so it must be cleared before the company can be destroyed).
+  has_many :current_users, class_name: "User", foreign_key: :current_company_id,
+    inverse_of: :current_company, dependent: :nullify
 
   validates :name, presence: true
   validates :slug, presence: true, uniqueness: true,

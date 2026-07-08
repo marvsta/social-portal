@@ -2,7 +2,8 @@ module Authentication
   extend ActiveSupport::Concern
 
   included do
-    helper_method :current_user, :current_session, :current_company, :current_membership, :signed_in?
+    helper_method :current_user, :current_session, :current_company, :current_membership, :signed_in?,
+                  :can_manage_company?, :can_publish_company?
     before_action :require_login
   end
 
@@ -51,14 +52,27 @@ module Authentication
     redirect_to login_path, alert: "Please sign in to continue."
   end
 
-  # Authorization gates, keyed off the current membership's role.
-  # Manager == owner/admin; publisher == owner/admin/editor.
+  # Authorization gates. Platform admins (users.admin) pass every gate;
+  # otherwise access is keyed off the current membership's role.
+  # Manager == company owner; publisher == owner/editor.
   def require_manager
-    deny_access unless current_membership&.can_manage?
+    deny_access unless can_manage_company?
   end
 
   def require_publisher
-    deny_access unless current_membership&.can_publish?
+    deny_access unless can_publish_company?
+  end
+
+  def require_site_admin
+    deny_access unless current_user&.admin?
+  end
+
+  def can_manage_company?
+    current_user&.admin? || current_membership&.can_manage? || false
+  end
+
+  def can_publish_company?
+    current_user&.admin? || current_membership&.can_publish? || false
   end
 
   def deny_access

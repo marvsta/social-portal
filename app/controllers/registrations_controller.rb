@@ -10,7 +10,7 @@ class RegistrationsController < ApplicationController
     @user = User.new(user_params)
     if @user.save
       sign_in(@user)
-      redirect_to new_company_path, notice: "Your account is ready. Let's set up your first company."
+      redirect_to companies_path, notice: "Your account is ready."
     else
       render :new, status: :unprocessable_content
     end

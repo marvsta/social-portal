@@ -1,0 +1,35 @@
+<% content_for :title, "Add user" %>
+<div class="container-fluid">
+  <div class="page-header">
+    <h3>Add user to <%= @company.name %></h3>
+    <p class="text-muted mb-0">If they already have an account, they're added right away. Otherwise we create the account and give you a temporary password to share.</p>
+  </div>
+
+  <div class="row">
+    <div class="col-lg-6">
+      <div class="card">
+        <div class="card-body">
+          <%= form_with url: company_memberships_path(@company), method: :post, local: true do %>
+            <div class="mb-3">
+              <label class="form-label" for="membership_email">Email</label>
+              <%= email_field_tag "membership[email]", nil, id: "membership_email", class: "form-control", required: true, placeholder: "person@example.com" %>
+            </div>
+            <div class="mb-3">
+              <label class="form-label" for="membership_name">Name <small class="text-muted">(only used if we create a new account)</small></label>
+              <%= text_field_tag "membership[name]", nil, id: "membership_name", class: "form-control", placeholder: "Jane Doe" %>
+            </div>
+            <div class="mb-3">
+              <label class="form-label" for="membership_role">Role</label>
+              <%= select_tag "membership[role]",
+                    options_for_select(Membership::ROLES.map { |r| [r.capitalize, r] }, @membership.role),
+                    id: "membership_role", class: "form-select" %>
+              <small class="text-muted">Owner manages the company · Editor manages posts · Viewer/Member read-only.</small>
+            </div>
+            <%= submit_tag "Add user", class: "btn btn-primary" %>
+            <%= link_to "Cancel", company_memberships_path(@company), class: "btn btn-link" %>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

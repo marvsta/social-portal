@@ -20,6 +20,7 @@ Rails.application.routes.draw do
     end
     resource :calendar, only: :show
     resource :dashboard, only: :show
+    resources :memberships, path: "users", only: %i[index new create update destroy]
     resources :social_channels do
       collection do
         get :instagram_setup

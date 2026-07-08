@@ -1,5 +1,9 @@
 class Membership < ApplicationRecord
-  ROLES = %w[owner admin editor viewer member].freeze
+  # Platform admins are not a membership role — that's the `admin` flag on User.
+  # owner  = company admin: manages users, channels, settings, approves posts
+  # editor = creates and manages posts for the company
+  # viewer/member = read-only
+  ROLES = %w[owner editor viewer member].freeze
 
   belongs_to :user
   belongs_to :company
@@ -8,10 +12,10 @@ class Membership < ApplicationRecord
   validates :user_id, uniqueness: { scope: :company_id }
 
   def can_manage?
-    %w[owner admin].include?(role)
+    role == "owner"
   end
 
   def can_publish?
-    %w[owner admin editor].include?(role)
+    %w[owner editor].include?(role)
   end
 end

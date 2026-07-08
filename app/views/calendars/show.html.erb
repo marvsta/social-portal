@@ -56,7 +56,7 @@
         <p class="text-muted mb-0">Plan, schedule, and review every post for <%= @company.name %>.</p>
       </div>
       <div class="col-sm-5 text-end">
-        <% if current_membership&.can_publish? %>
+        <% if can_publish_company? %>
           <%= link_to new_company_post_path(@company), class: "btn btn-primary" do %>
             <i data-feather="plus"></i>&nbsp; New post
           <% end %>
@@ -182,7 +182,7 @@
       if (!calEl || typeof FullCalendar === 'undefined') { return; }
 
       var newPostBase = "<%= new_company_post_path(@company) %>";
-      var canCreatePost = <%= current_membership&.can_publish? ? "true" : "false" %>;
+      var canCreatePost = <%= can_publish_company? ? "true" : "false" %>;
       var events = <%= raw @events.to_json %>;
 
       function escapeHtml(str) {

@@ -28,6 +28,12 @@ Then sign in at http://localhost:3000/login with:
 demo@socialportal.test / password123
 ```
 
+The demo account is a **platform admin**. In production, grant the flag from a console:
+
+```bash
+heroku run rails runner 'User.find_by!(email: "you@example.com").update!(admin: true)'
+```
+
 ## Demo data
 
 `db/seeds.rb` creates:
@@ -42,8 +48,8 @@ demo@socialportal.test / password123
 | Model           | Role |
 |-----------------|------|
 | `Company`       | Tenant. Owns channels, posts, and analytics. |
-| `User`          | Person. Logs in. Belongs to many companies via `Membership`. |
-| `Membership`    | Join. Roles: `owner`, `admin`, `editor`, `viewer`, `member`. |
+| `User`          | Person. Logs in. Belongs to many companies via `Membership`. `admin: true` marks a **platform admin** who can manage every company, create companies, and assign users. |
+| `Membership`    | Join. Roles: `owner` (company admin — manages users/channels/settings), `editor` (manages posts), `viewer`/`member` (read-only). |
 | `SocialChannel` | A connected social account (Instagram, LinkedIn, etc). Stores access tokens. |
 | `Post`          | A single piece of content authored under a company. Has many channels via `ChannelPost`. Has many media attachments via Active Storage. |
 | `ChannelPost`   | Per-channel publishing record: status, external id, external url, last error. |

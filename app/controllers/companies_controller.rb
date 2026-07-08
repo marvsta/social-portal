@@ -2,10 +2,12 @@ class CompaniesController < ApplicationController
   before_action :load_company, only: %i[show edit update switch]
   before_action :require_membership, only: %i[show edit update switch]
   before_action :require_manager, only: %i[edit update]
+  # Only the platform admin creates companies; owners manage their own.
+  before_action :require_site_admin, only: %i[new create]
 
   def index
-    @companies = current_user.companies.order(:name)
-    redirect_to new_company_path and return if @companies.empty?
+    @companies = current_user.admin? ? Company.order(:name) : current_user.companies.order(:name)
+    redirect_to new_company_path and return if @companies.empty? && current_user.admin?
   end
 
   def new
@@ -16,7 +18,8 @@ class CompaniesController < ApplicationController
     @company = Company.new(company_params)
     Company.transaction do
       @company.save!
-      Membership.create!(user: current_user, company: @company, role: "owner")
+      # Admins have access to every company without a membership row.
+      Membership.create!(user: current_user, company: @company, role: "owner") unless current_user.admin?
       current_user.update!(current_company: @company)
     end
     redirect_to company_calendar_path(@company), notice: "Welcome to #{@company.name}!"
@@ -51,6 +54,7 @@ class CompaniesController < ApplicationController
   end
 
   def require_membership
+    return if current_user.admin?
     return if current_user.member_of?(@company)
     redirect_to companies_path, alert: "You don't have access to that company."
   end

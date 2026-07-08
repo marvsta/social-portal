@@ -6,6 +6,8 @@ if owner.new_record?
   owner.save!
   puts "  Created user demo@socialportal.test / password123"
 end
+# The demo owner doubles as the platform admin (can manage all companies).
+owner.update!(admin: true) unless owner.admin?
 
 editor = User.find_or_initialize_by(email: "editor@socialportal.test")
 if editor.new_record?

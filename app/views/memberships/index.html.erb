@@ -1,0 +1,90 @@
+<% content_for :title, "Users" %>
+<div class="container-fluid">
+  <div class="page-header">
+    <div class="row">
+      <div class="col-sm-6">
+        <h3>Users</h3>
+        <p class="text-muted mb-0">People with access to <%= @company.name %> and what they're allowed to do.</p>
+      </div>
+      <div class="col-sm-6 text-end">
+        <% if can_manage_company? %>
+          <%= link_to new_company_membership_path(@company), class: "btn btn-primary" do %>
+            <i data-feather="user-plus"></i>&nbsp; Add user
+          <% end %>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table align-middle mb-0">
+          <thead>
+            <tr>
+              <th class="ps-4">User</th>
+              <th>Role</th>
+              <th>Joined</th>
+              <% if can_manage_company? %><th class="text-end pe-4">Actions</th><% end %>
+            </tr>
+          </thead>
+          <tbody>
+            <% @memberships.each do |m| %>
+              <tr>
+                <td class="ps-4">
+                  <div class="d-flex align-items-center">
+                    <span style="width:38px;height:38px;border-radius:50%;background:#7366FF;color:white;display:inline-flex;align-items:center;justify-content:center;font-weight:700;">
+                      <%= m.user.display_name[0].upcase %>
+                    </span>
+                    <div class="ms-3">
+                      <h6 class="mb-0">
+                        <%= m.user.display_name %>
+                        <% if m.user_id == current_user.id %><span class="badge bg-light text-dark">You</span><% end %>
+                        <% if m.user.admin? %><span class="badge" style="background:#E1306C;">Platform admin</span><% end %>
+                      </h6>
+                      <small class="text-muted"><%= m.user.email %></small>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <% if can_manage_company? && m.user_id != current_user.id %>
+                    <%= form_with url: company_membership_path(@company, m), method: :patch, local: true, class: "d-inline" do %>
+                      <%= select_tag "membership[role]",
+                            options_for_select(Membership::ROLES.map { |r| [r.capitalize, r] }, m.role),
+                            class: "form-select form-select-sm", style: "width:auto;display:inline-block;",
+                            onchange: "this.form.requestSubmit()" %>
+                    <% end %>
+                  <% else %>
+                    <span class="badge <%= m.can_manage? ? 'bg-primary' : 'bg-light text-dark' %>"><%= m.role.capitalize %></span>
+                  <% end %>
+                </td>
+                <td><small class="text-muted"><%= l m.created_at.to_date, format: :long %></small></td>
+                <% if can_manage_company? %>
+                  <td class="text-end pe-4">
+                    <% if m.user_id != current_user.id %>
+                      <%= button_to "Remove", company_membership_path(@company, m), method: :delete,
+                            class: "btn btn-sm btn-outline-danger",
+                            form: { data: { turbo_confirm: "Remove #{m.user.display_name} from #{@company.name}?" }, class: "d-inline" } %>
+                    <% end %>
+                  </td>
+                <% end %>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="card mt-3">
+    <div class="card-body py-3">
+      <h6 class="mb-2">What each role can do</h6>
+      <div class="row small text-muted">
+        <div class="col-md-4"><strong>Owner</strong> — company admin: manages users, channels, company settings, approves posts.</div>
+        <div class="col-md-4"><strong>Editor</strong> — creates and manages posts for this company.</div>
+        <div class="col-md-4"><strong>Viewer / Member</strong> — read-only: browse the calendar, posts and performance.</div>
+      </div>
+      <small class="text-muted d-block mt-2">Platform admins (a flag on the account, not a company role) can manage every company, create companies, and assign users.</small>
+    </div>
+  </div>
+</div>
