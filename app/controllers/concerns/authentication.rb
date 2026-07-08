@@ -32,12 +32,17 @@ module Authentication
     @current_company = if current_user.nil?
       nil
     elsif params[:company_id].present?
-      current_user.companies.find_by(slug: params[:company_id])
+      accessible_companies.find_by(slug: params[:company_id])
     elsif params[:controller] == "companies" && params[:id].present?
-      current_user.companies.find_by(slug: params[:id])
+      accessible_companies.find_by(slug: params[:id])
     else
-      current_user.current_company || current_user.companies.first
+      current_user.current_company || accessible_companies.first
     end
+  end
+
+  # Admins can act on every company, not just the ones they're members of.
+  def accessible_companies
+    current_user.admin? ? Company.all : current_user.companies
   end
 
   def current_membership
