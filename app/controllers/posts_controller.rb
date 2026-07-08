@@ -1,8 +1,9 @@
 class PostsController < ApplicationController
   include CompanyScoped
 
-  before_action :require_publisher, only: %i[new create edit update destroy submit_for_review schedule publish_now generate_caption generate_image]
-  before_action :require_manager, only: %i[approve]
+  before_action :require_publisher, only: %i[new create edit update submit_for_review schedule publish_now generate_caption generate_image]
+  # Deleting is reserved for admins/owners; editors can only edit their content.
+  before_action :require_manager, only: %i[approve destroy]
   before_action :load_post, only: %i[show edit update destroy submit_for_review approve schedule publish_now]
 
   def index

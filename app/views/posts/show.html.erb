@@ -14,9 +14,11 @@
       <div class="col-sm-5 text-end">
         <% if can_publish_company? %>
           <%= link_to "Edit", edit_company_post_path(@company, @post), class: "btn btn-outline-secondary btn-sm" %>
+        <% end %>
+        <% if can_manage_company? %>
           <%= button_to "Delete", company_post_path(@company, @post), method: :delete,
                 class: "btn btn-outline-danger btn-sm",
-                form: { class: "d-inline", data: { turbo_confirm: "Delete this post?" } } %>
+                form: { class: "d-inline", data: { turbo_confirm: "Delete this post? This can't be undone." } } %>
         <% end %>
       </div>
     </div>
