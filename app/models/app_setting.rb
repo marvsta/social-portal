@@ -2,6 +2,8 @@
 # accessed through AppSetting.current.
 class AppSetting < ApplicationRecord
   validates :ai_provider, inclusion: { in: proc { Ai::Providers.keys } }
+  validates :image_model, inclusion: { in: proc { Ai::Providers.image_model_ids } }
+  validates :image_quality, inclusion: { in: proc { Ai::Providers.image_quality_ids } }
   validate :model_matches_provider
 
   def self.current

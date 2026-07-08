@@ -45,6 +45,6 @@ class AiSettingsController < ApplicationController
   end
 
   def setting_params
-    params.require(:app_setting).permit(:ai_provider, :ai_model)
+    params.require(:app_setting).permit(:ai_provider, :ai_model, :image_model, :image_quality)
   end
 end

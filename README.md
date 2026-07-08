@@ -107,6 +107,10 @@ export OPENAI_API_KEY=sk-...
 
 Without a key, the rest of the app works normally — the assistant just shows a "not configured" message. Use the "Test connection" button on the settings screen to verify a key/model without writing a post.
 
+### AI images
+
+The post form also has an "AI image studio" with two modes: generate a graphic from scratch, or upload a photo and have it turned into a social media flyer. If the description is left blank it works from the post's caption. Images always use OpenAI (`OPENAI_API_KEY`); the model (`gpt-image-1-mini` / `gpt-image-1`) and a single global quality setting (low ≈ $0.01, medium ≈ $0.04, high ≈ $0.17 per image) are chosen on the AI Settings screen. Generated images are stored via Active Storage and attached to the post when you save it.
+
 ## Running background jobs
 
 Solid Queue is included. For local dev:

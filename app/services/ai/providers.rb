@@ -35,6 +35,27 @@ module Ai
       "openai"    => "Ai::Providers::Openai"
     }.freeze
 
+    # Image generation is OpenAI-only (Anthropic doesn't generate images), so
+    # it isn't part of the provider toggle — just a model + quality choice.
+    IMAGE_MODELS = [
+      ["GPT Image 1 mini — cheapest, great for drafts", "gpt-image-1-mini"],
+      ["GPT Image 1 — best quality & text rendering", "gpt-image-1"]
+    ].freeze
+
+    IMAGE_QUALITIES = [
+      ["Low — ~1 cent per image", "low"],
+      ["Medium — a few cents, good default", "medium"],
+      ["High — up to ~17 cents, crispest", "high"]
+    ].freeze
+
+    def self.image_model_ids
+      IMAGE_MODELS.map(&:last)
+    end
+
+    def self.image_quality_ids
+      IMAGE_QUALITIES.map(&:last)
+    end
+
     def self.keys
       REGISTRY.keys
     end

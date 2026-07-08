@@ -1,7 +1,7 @@
 class PostsController < ApplicationController
   include CompanyScoped
 
-  before_action :require_publisher, only: %i[new create edit update destroy submit_for_review schedule publish_now generate_caption]
+  before_action :require_publisher, only: %i[new create edit update destroy submit_for_review schedule publish_now generate_caption generate_image]
   before_action :require_manager, only: %i[approve]
   before_action :load_post, only: %i[show edit update destroy submit_for_review approve schedule publish_now]
 
@@ -98,6 +98,33 @@ class PostsController < ApplicationController
     render json: result
   rescue Ai::NotConfigured => e
     render json: { error: "AI isn't configured yet — #{e.message}. Set the key and restart the server, or pick a different provider in AI settings." }, status: :service_unavailable
+  rescue Ai::Error => e
+    render json: { error: e.message }, status: :unprocessable_content
+  end
+
+  def generate_image
+    result = Ai::ImageGenerator.new(
+      company: @company,
+      mode: params[:mode],
+      description: params[:description],
+      caption: params[:caption],
+      title: params[:title],
+      size: params[:size],
+      image: params[:image]
+    ).generate
+
+    blob = ActiveStorage::Blob.create_and_upload!(
+      io: StringIO.new(result[:png]),
+      filename: "ai-image-#{Time.current.strftime('%Y%m%d-%H%M%S')}.png",
+      content_type: "image/png"
+    )
+    render json: {
+      signed_id: blob.signed_id,
+      url: rails_blob_path(blob, only_path: true),
+      prompt: result[:prompt]
+    }
+  rescue Ai::NotConfigured => e
+    render json: { error: "AI images aren't configured yet — #{e.message}. Set the key and restart the server." }, status: :service_unavailable
   rescue Ai::Error => e
     render json: { error: e.message }, status: :unprocessable_content
   end

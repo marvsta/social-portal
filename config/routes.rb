@@ -28,6 +28,7 @@ Rails.application.routes.draw do
     resources :posts do
       collection do
         post :generate_caption
+        post :generate_image
       end
       member do
         post :submit_for_review

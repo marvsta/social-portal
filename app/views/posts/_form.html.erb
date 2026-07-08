@@ -34,6 +34,40 @@
         <%= f.label :hashtags, class: "form-label" %>
         <%= f.text_field :hashtags, class: "form-control", placeholder: "#brand #campaign" %>
       </div>
+      <div class="card mb-3" style="border:1px dashed #7366FF;background:#F8F7FF;">
+        <div class="card-body py-3">
+          <label class="form-label" style="color:#7366FF;font-weight:600;">
+            <i class="fa fa-picture-o"></i>&nbsp; AI image studio
+          </label>
+          <div class="btn-group btn-group-sm d-block mb-2" role="group">
+            <input type="radio" class="btn-check" name="ai_image_mode" id="ai_mode_scratch" value="scratch" checked>
+            <label class="btn btn-outline-primary" for="ai_mode_scratch">Generate new</label>
+            <input type="radio" class="btn-check" name="ai_image_mode" id="ai_mode_enhance" value="enhance">
+            <label class="btn btn-outline-primary" for="ai_mode_enhance">Enhance my image</label>
+          </div>
+          <div id="ai_image_upload_wrap" class="mb-2 d-none">
+            <input type="file" id="ai_image_upload" class="form-control form-control-sm" accept="image/png,image/jpeg,image/webp">
+            <small class="text-muted">Your photo will be turned into a social media flyer.</small>
+          </div>
+          <textarea id="ai_image_description" class="form-control mb-2" rows="2"
+                    placeholder="What should the image show? Leave blank to work from your caption."></textarea>
+          <div class="d-flex align-items-center gap-2 flex-wrap">
+            <select id="ai_image_size" class="form-select form-select-sm" style="width:auto;">
+              <option value="square">Square (feed)</option>
+              <option value="portrait">Portrait (story)</option>
+              <option value="landscape">Landscape</option>
+            </select>
+            <button type="button" id="ai_image_btn" class="btn btn-sm btn-primary">
+              <span id="ai_image_spinner" class="spinner-border spinner-border-sm me-1 d-none" role="status"></span>
+              Generate image
+            </button>
+            <small id="ai_image_status" class="text-muted d-none">Generating — this can take up to a minute…</small>
+            <small id="ai_image_error" class="text-danger d-none"></small>
+          </div>
+          <div id="ai_image_results" class="mt-2 d-flex flex-wrap gap-2"></div>
+        </div>
+      </div>
+
       <div class="mb-3">
         <%= f.label :media, "Media (images / videos)", class: "form-label" %>
         <%= f.file_field :media, multiple: true, class: "form-control", accept: "image/*,video/*" %>
@@ -41,7 +75,7 @@
           <div class="mt-2 d-flex flex-wrap gap-2">
             <% @post.media.each do |m| %>
               <% if m.image? %>
-                <%= image_tag m, style: "max-height:80px;border-radius:6px;" %>
+                <%= image_tag m, style: "max-height:80px;border-radius:6px;cursor:zoom-in;", class: "js-lightboxable", title: "Click to view full size" %>
               <% else %>
                 <span class="badge bg-secondary"><%= m.filename %></span>
               <% end %>
@@ -89,6 +123,40 @@
 <% end %>
 
 <script>
+  (function() {
+    // Turbo replaces <body> on navigation, so re-create the overlay if it's gone.
+    var overlay = document.getElementById("ai_image_lightbox");
+    if (!overlay) {
+      overlay = document.createElement("div");
+      overlay.id = "ai_image_lightbox";
+      overlay.style.cssText = "display:none;position:fixed;inset:0;z-index:1060;background:rgba(0,0,0,0.85);align-items:center;justify-content:center;cursor:zoom-out;padding:24px;";
+      overlay.innerHTML = '<img style="max-width:100%;max-height:100%;border-radius:10px;box-shadow:0 10px 40px rgba(0,0,0,0.5);">';
+      document.body.appendChild(overlay);
+      overlay.addEventListener("click", function() { overlay.style.display = "none"; });
+    }
+
+    if (!window.aiLightboxKeyBound) {
+      window.aiLightboxKeyBound = true;
+      document.addEventListener("keydown", function(e) {
+        if (e.key !== "Escape") return;
+        var el = document.getElementById("ai_image_lightbox");
+        if (el) el.style.display = "none";
+      });
+    }
+
+    window.aiImageLightbox = function(url) {
+      var el = document.getElementById("ai_image_lightbox");
+      el.querySelector("img").src = url;
+      el.style.display = "flex";
+    };
+
+    document.querySelectorAll(".js-lightboxable").forEach(function(img) {
+      if (img.dataset.lightboxBound) return;
+      img.dataset.lightboxBound = "1";
+      img.addEventListener("click", function() { window.aiImageLightbox(img.currentSrc || img.src); });
+    });
+  })();
+
   (function() {
     var btn = document.getElementById("ai_generate_btn");
     if (!btn || btn.dataset.bound) return;
@@ -144,6 +212,79 @@
       .finally(function() {
         btn.disabled = false;
         spinner.classList.add("d-none");
+      });
+    });
+  })();
+
+  (function() {
+    var btn = document.getElementById("ai_image_btn");
+    if (!btn || btn.dataset.bound) return;
+    btn.dataset.bound = "1";
+
+    var spinner = document.getElementById("ai_image_spinner");
+    var statusEl = document.getElementById("ai_image_status");
+    var errorEl = document.getElementById("ai_image_error");
+    var results = document.getElementById("ai_image_results");
+    var uploadWrap = document.getElementById("ai_image_upload_wrap");
+
+    document.querySelectorAll("input[name='ai_image_mode']").forEach(function(radio) {
+      radio.addEventListener("change", function() {
+        uploadWrap.classList.toggle("d-none", radio.value !== "enhance");
+        document.getElementById("ai_image_description").placeholder =
+          radio.value === "enhance"
+            ? "How should we transform it? e.g. “turn into a sale flyer with bold 20% OFF text”"
+            : "What should the image show? Leave blank to work from your caption.";
+      });
+    });
+
+    btn.addEventListener("click", function() {
+      errorEl.classList.add("d-none");
+      var mode = document.querySelector("input[name='ai_image_mode']:checked").value;
+      var upload = document.getElementById("ai_image_upload");
+      if (mode === "enhance" && !upload.files.length) {
+        errorEl.textContent = "Choose an image to enhance first.";
+        errorEl.classList.remove("d-none");
+        return;
+      }
+
+      var fd = new FormData();
+      fd.append("mode", mode);
+      fd.append("description", document.getElementById("ai_image_description").value);
+      fd.append("caption", document.getElementById("post_caption").value);
+      fd.append("title", document.getElementById("post_title").value);
+      fd.append("size", document.getElementById("ai_image_size").value);
+      if (mode === "enhance") fd.append("image", upload.files[0]);
+
+      btn.disabled = true;
+      spinner.classList.remove("d-none");
+      statusEl.classList.remove("d-none");
+
+      fetch("<%= generate_image_company_posts_path(@company) %>", {
+        method: "POST",
+        headers: { "X-CSRF-Token": document.querySelector("meta[name='csrf-token']").content },
+        body: fd
+      })
+      .then(function(r) { return r.json().then(function(data) { return { ok: r.ok, data: data }; }); })
+      .then(function(res) {
+        if (!res.ok) throw new Error(res.data.error || "Image generation failed.");
+        var wrap = document.createElement("div");
+        wrap.className = "position-relative";
+        wrap.innerHTML =
+          '<img src="' + res.data.url + '" style="max-height:120px;border-radius:8px;border:2px solid #7366FF;cursor:zoom-in;" title="Click to view full size — will be attached when you save">' +
+          '<input type="hidden" name="post[media][]" value="' + res.data.signed_id + '">' +
+          '<button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0" style="padding:0 6px;border-radius:50%;" aria-label="Remove">&times;</button>';
+        wrap.querySelector("button").addEventListener("click", function() { wrap.remove(); });
+        wrap.querySelector("img").addEventListener("click", function() { window.aiImageLightbox(res.data.url); });
+        results.appendChild(wrap);
+      })
+      .catch(function(e) {
+        errorEl.textContent = e.message;
+        errorEl.classList.remove("d-none");
+      })
+      .finally(function() {
+        btn.disabled = false;
+        spinner.classList.add("d-none");
+        statusEl.classList.add("d-none");
       });
     });
   })();

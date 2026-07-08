@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_07_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_07_130000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -46,6 +46,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_07_120000) do
     t.string "ai_model"
     t.string "ai_provider", default: "anthropic", null: false
     t.datetime "created_at", null: false
+    t.string "image_model", default: "gpt-image-1-mini", null: false
+    t.string "image_quality", default: "medium", null: false
     t.datetime "updated_at", null: false
   end
 
