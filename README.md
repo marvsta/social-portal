@@ -111,6 +111,21 @@ Without a key, the rest of the app works normally — the assistant just shows a
 
 The post form also has an "AI image studio" with two modes: generate a graphic from scratch, or upload a photo and have it turned into a social media flyer. If the description is left blank it works from the post's caption. Images always use OpenAI (`OPENAI_API_KEY`); the model (`gpt-image-1-mini` / `gpt-image-1`) and a single global quality setting (low ≈ $0.01, medium ≈ $0.04, high ≈ $0.17 per image) are chosen on the AI Settings screen. Generated images are stored via Active Storage and attached to the post when you save it.
 
+## Media storage
+
+Development stores uploads on local disk (`storage/`). Production uses **S3** whenever `AWS_S3_BUCKET` is set (and falls back to disk otherwise — don't rely on that on Heroku, its filesystem is wiped on every restart). Set these config vars:
+
+```bash
+AWS_ACCESS_KEY_ID=...
+AWS_SECRET_ACCESS_KEY=...
+AWS_REGION=eu-north-1          # your bucket's region (defaults to us-east-1)
+AWS_S3_BUCKET=your-bucket-name
+# Optional — ONLY for S3-compatible stores like Cloudflare R2 or MinIO:
+# AWS_S3_ENDPOINT=https://<account>.r2.cloudflarestorage.com
+```
+
+The bucket can stay fully private: Active Storage serves media through signed, short-lived S3 URLs (via `/rails/active_storage/...` redirects), which also satisfies Instagram's requirement to fetch media from a public URL at publish time. The IAM user needs `s3:GetObject`, `s3:PutObject`, `s3:DeleteObject`, and `s3:ListBucket` on the bucket.
+
 ## Running background jobs
 
 Solid Queue is included. For local dev:
