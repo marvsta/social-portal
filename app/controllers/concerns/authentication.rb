@@ -3,7 +3,7 @@ module Authentication
 
   included do
     helper_method :current_user, :current_session, :current_company, :current_membership, :signed_in?,
-                  :can_manage_company?, :can_publish_company?
+                  :can_manage_company?, :can_publish_company?, :accessible_companies
     before_action :require_login
   end
 

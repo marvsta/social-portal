@@ -9,31 +9,43 @@
       <div class="toggle-sidebar"><i class="status_toggle middle" data-feather="align-center" id="sidebar-toggle"></i></div>
     </div>
     <div class="left-menu-header col">
-      <ul>
-        <% if current_company %>
-          <li class="ps-3">
-            <span class="text-muted f-12 d-block">Current company</span>
-            <strong><%= current_company.name %></strong>
+      <ul class="nav-menus m-0">
+        <% companies = signed_in? ? accessible_companies.order(:name) : Company.none %>
+        <% if companies.any? %>
+          <li class="onhover-dropdown ps-3">
+            <div class="d-flex align-items-center" style="cursor:pointer;">
+              <span style="width:34px;height:34px;border-radius:8px;background:#7366FF1a;color:#7366FF;display:inline-flex;align-items:center;justify-content:center;font-weight:700;">
+                <%= current_company ? current_company.name[0].upcase : "?" %>
+              </span>
+              <div class="ms-2 text-start">
+                <span class="text-muted f-12 d-block lh-1">Company</span>
+                <strong><%= current_company&.name || "Select a company" %></strong>
+              </div>
+              <i data-feather="chevron-down" class="ms-2" style="width:16px;height:16px;"></i>
+            </div>
+            <div class="onhover-show-div p-2" style="min-width:260px;max-height:60vh;overflow-y:auto;">
+              <% companies.each do |c| %>
+                <%= button_to switch_company_path(c), method: :post,
+                      class: "btn p-2 d-flex align-items-center w-100 text-start #{'bg-light' if c == current_company}",
+                      form: { class: "d-block mb-1" } do %>
+                  <span style="width:28px;height:28px;border-radius:6px;background:#7366FF;color:white;display:inline-flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;">
+                    <%= c.name[0].upcase %>
+                  </span>
+                  <span class="ms-2 flex-grow-1"><%= c.name %></span>
+                  <% if c == current_company %><i data-feather="check" style="width:16px;height:16px;color:#7366FF;"></i><% end %>
+                <% end %>
+              <% end %>
+              <% if current_user.admin? %>
+                <hr class="my-2">
+                <%= link_to "+ New company", new_company_path, class: "btn btn-sm btn-primary w-100" %>
+              <% end %>
+            </div>
           </li>
         <% end %>
       </ul>
     </div>
     <div class="nav-right col pull-right right-menu p-0">
       <ul class="nav-menus">
-        <% if current_user&.companies&.any? %>
-          <li class="onhover-dropdown">
-            <button class="btn btn-outline-primary btn-sm" type="button">
-              <i data-feather="briefcase"></i>&nbsp;Switch company
-            </button>
-            <div class="onhover-show-div p-3" style="min-width: 240px;">
-              <% current_user.companies.each do |c| %>
-                <%= button_to c.name, switch_company_path(c), method: :post, class: "btn btn-link p-0 d-block text-start mb-2", form: { class: "d-block" } %>
-              <% end %>
-              <hr>
-              <%= link_to "+ New company", new_company_path, class: "btn btn-sm btn-primary w-100" %>
-            </div>
-          </li>
-        <% end %>
         <li class="onhover-dropdown">
           <div class="d-flex align-items-center" style="cursor:pointer;">
             <div style="width:32px;height:32px;border-radius:50%;background:#7366FF;color:white;display:flex;align-items:center;justify-content:center;font-weight:600;">
