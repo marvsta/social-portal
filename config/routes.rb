@@ -21,7 +21,13 @@ Rails.application.routes.draw do
     end
     resource :calendar, only: :show
     resource :dashboard, only: :show
-    resources :memberships, path: "users", only: %i[index new create update destroy]
+    resources :memberships, path: "users", only: %i[index new create update destroy] do
+      member do
+        # Platform-admin-only: set a member's password (no self-service page yet).
+        get   :edit_password
+        patch :update_password
+      end
+    end
     resources :social_channels do
       collection do
         get :instagram_setup

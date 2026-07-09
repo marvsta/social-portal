@@ -2,7 +2,8 @@ class MembershipsController < ApplicationController
   include CompanyScoped
 
   before_action :require_manager, only: %i[new create update destroy]
-  before_action :load_membership, only: %i[update destroy]
+  before_action :require_site_admin, only: %i[edit_password update_password]
+  before_action :load_membership, only: %i[update destroy edit_password update_password]
 
   def index
     @memberships = @company.memberships.includes(:user).joins(:user).order("users.name, users.email")
@@ -78,6 +79,30 @@ class MembershipsController < ApplicationController
     end
     @membership.destroy
     redirect_to company_memberships_path(@company), notice: "#{@membership.user.display_name} removed from #{@company.name}."
+  end
+
+  def edit_password
+    @user = @membership.user
+  end
+
+  def update_password
+    @user = @membership.user
+    password = params.dig(:user, :password).to_s
+
+    if password.blank?
+      flash.now[:alert] = "Enter a new password."
+      return render :edit_password, status: :unprocessable_content
+    end
+
+    if @user.update(password: password, password_confirmation: params.dig(:user, :password_confirmation))
+      # Log the user out everywhere so the old password stops working immediately.
+      @user.sessions.where.not(id: current_session.id).destroy_all
+      redirect_to company_memberships_path(@company),
+        notice: "Password updated for #{@user.display_name}. Share it with them securely — their other sessions were signed out."
+    else
+      flash.now[:alert] = @user.errors.full_messages.to_sentence
+      render :edit_password, status: :unprocessable_content
+    end
   end
 
   private

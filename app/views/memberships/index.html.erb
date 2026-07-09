@@ -82,6 +82,9 @@
                 <td><small class="text-muted"><%= l m.created_at.to_date, format: :long %></small></td>
                 <% if can_manage_company? %>
                   <td class="text-end pe-4">
+                    <% if current_user.admin? %>
+                      <%= link_to "Set password", edit_password_company_membership_path(@company, m), class: "btn btn-sm btn-outline-secondary me-1" %>
+                    <% end %>
                     <% if m.user_id != current_user.id %>
                       <%= button_to "Remove", company_membership_path(@company, m), method: :delete,
                             class: "btn btn-sm btn-outline-danger",

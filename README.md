@@ -28,7 +28,7 @@ Then sign in at http://localhost:3000/login with:
 demo@socialportal.test / password123
 ```
 
-The demo account is a **platform admin**. Public signup is disabled — accounts are created by admins/owners from a company's **Users** page (so every user always belongs to a company). To bootstrap the first admin in production:
+The demo account is a **platform admin**. Public signup is disabled — accounts are created by admins/owners from a company's **Users** page (so every user always belongs to a company). Platform admins can also reset any member's password from that page (**Set password**) — the user's other sessions are signed out when the password changes. To bootstrap the first admin in production:
 
 ```bash
 heroku run rails runner 'User.create!(email: "you@example.com", name: "You", password: "change-me-now", password_confirmation: "change-me-now", admin: true)'
