@@ -3,6 +3,8 @@ module Instagram
   # Two-step container/publish flow:
   #   1. POST /{ig-user-id}/media         -> creation_id
   #   2. POST /{ig-user-id}/media_publish -> media_id (the published post)
+  # Carousels create one container per item (is_carousel_item), then a
+  # CAROUSEL container referencing the children, then publish that.
   # Insights:
   #   GET /{media-id}/insights?metric=...
   #
@@ -10,9 +12,12 @@ module Instagram
   class Client
     GRAPH_VERSION = "v19.0".freeze
     GRAPH_HOST = "https://graph.facebook.com".freeze
+    MAX_CAROUSEL_ITEMS = 10 # Instagram's hard limit
 
     Error = Class.new(StandardError)
     NotConfigured = Class.new(Error)
+    # Meta 5xx / rate limits / network hiccups — safe to retry the publish.
+    TransientError = Class.new(Error)
 
     def initialize(channel)
       @channel = channel
@@ -23,13 +28,7 @@ module Instagram
     def publish_image(image_url:, caption: nil)
       creation = post_path("/#{@channel.external_account_id}/media",
         image_url: image_url, caption: caption)
-      creation_id = creation.fetch("id")
-      result = post_path("/#{@channel.external_account_id}/media_publish",
-        creation_id: creation_id)
-      {
-        external_id: result.fetch("id"),
-        external_url: media_permalink(result.fetch("id"))
-      }
+      publish_container(creation.fetch("id"))
     end
 
     def publish_video(video_url:, caption: nil)
@@ -37,12 +36,30 @@ module Instagram
         media_type: "REELS", video_url: video_url, caption: caption)
       creation_id = creation.fetch("id")
       wait_until_ready(creation_id)
-      result = post_path("/#{@channel.external_account_id}/media_publish",
-        creation_id: creation_id)
-      {
-        external_id: result.fetch("id"),
-        external_url: media_permalink(result.fetch("id"))
-      }
+      publish_container(creation_id)
+    end
+
+    # items: [{ url:, video: true/false }, ...] — 2..10 of them.
+    def publish_carousel(items:, caption: nil)
+      raise Error, "A carousel needs 2–#{MAX_CAROUSEL_ITEMS} items" unless items.size.between?(2, MAX_CAROUSEL_ITEMS)
+
+      child_ids = items.map do |item|
+        params = if item[:video]
+          { media_type: "VIDEO", video_url: item[:url], is_carousel_item: true }
+        else
+          { image_url: item[:url], is_carousel_item: true }
+        end
+        creation = post_path("/#{@channel.external_account_id}/media", **params)
+        creation.fetch("id")
+      end
+      # Video children process asynchronously; image children are ready at once.
+      items.each_with_index { |item, i| wait_until_ready(child_ids[i]) if item[:video] }
+
+      creation = post_path("/#{@channel.external_account_id}/media",
+        media_type: "CAROUSEL", children: child_ids.join(","), caption: caption)
+      creation_id = creation.fetch("id")
+      wait_until_ready(creation_id)
+      publish_container(creation_id)
     end
 
     def fetch_insights(media_id)
@@ -65,16 +82,27 @@ module Instagram
 
     private
 
+    def publish_container(creation_id)
+      result = post_path("/#{@channel.external_account_id}/media_publish",
+        creation_id: creation_id)
+      {
+        external_id: result.fetch("id"),
+        external_url: media_permalink(result.fetch("id"))
+      }
+    end
+
     def wait_until_ready(creation_id, timeout: 120)
       start = Time.current
+      interval = 3
       loop do
         info = get_path("/#{creation_id}", fields: "status_code")
         case info["status_code"]
         when "FINISHED"  then return true
         when "ERROR", "EXPIRED" then raise Error, "Container failed: #{info.inspect}"
         end
-        raise Error, "Timed out waiting for container" if (Time.current - start) > timeout
-        sleep 5
+        raise TransientError, "Timed out waiting for container #{creation_id}" if (Time.current - start) > timeout
+        sleep interval
+        interval = [ interval * 2, 15 ].min
       end
     end
 
@@ -88,14 +116,20 @@ module Instagram
 
     def run_request(verb, path, params)
       url = "#{GRAPH_HOST}/#{GRAPH_VERSION}#{path}"
-      params = params.merge(access_token: @channel.access_token)
-      response = Faraday.send(verb, url, params)
+      # Token goes in a header, not the query string, so it can't leak into
+      # request logs on either end.
+      response = Faraday.send(verb, url, params, { "Authorization" => "Bearer #{@channel.access_token}" })
       body = JSON.parse(response.body) rescue {}
-      if response.status >= 400
+      if response.status == 429 || response.status >= 500
+        message = body.dig("error", "message") || body.to_s
+        raise TransientError, "Instagram API #{response.status}: #{message}"
+      elsif response.status >= 400
         message = body.dig("error", "message") || body.to_s
         raise Error, "Instagram API #{response.status}: #{message}"
       end
       body
+    rescue Faraday::ConnectionFailed, Faraday::TimeoutError => e
+      raise TransientError, "Instagram API unreachable: #{e.message}"
     end
   end
 end

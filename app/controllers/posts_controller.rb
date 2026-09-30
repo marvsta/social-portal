@@ -40,12 +40,29 @@ class PostsController < ApplicationController
   end
 
   def update
+    was_approved = %w[approved scheduled].include?(@post.status)
+    was_scheduled_for = @post.scheduled_at
+
     @post.assign_attributes(post_params)
     if params.dig(:post, :social_channel_ids)
-      @post.social_channel_ids = Array(params[:post][:social_channel_ids]).reject(&:blank?)
+      requested = Array(params[:post][:social_channel_ids]).reject(&:blank?).map(&:to_i)
+      # Channels that already published keep their ChannelPost no matter what —
+      # dropping it would destroy the publishing record and its metric history.
+      locked = @post.channel_posts.where(status: "published").pluck(:social_channel_id)
+      @post.social_channel_ids = (requested | locked)
     end
+
     if @post.save
-      redirect_to company_post_path(@company, @post), notice: "Post updated."
+      notice = "Post updated."
+      if was_approved && @post.status == "pending_review"
+        notice = "Post updated. Content changed after approval, so it's back in review."
+      elsif @post.status == "scheduled" && @post.scheduled_at != was_scheduled_for
+        # Rescheduled: enqueue a job pinned to the new time. The job enqueued
+        # for the old time carries the old scheduled_for and won't fire.
+        enqueue_publish_job
+        notice = "Post rescheduled for #{l(@post.scheduled_at, format: :long)}."
+      end
+      redirect_to company_post_path(@company, @post), notice: notice
     else
       @channels = @company.social_channels.active
       render :edit, status: :unprocessable_content
@@ -72,19 +89,20 @@ class PostsController < ApplicationController
       redirect_to edit_company_post_path(@company, @post), alert: "Set a schedule date first."
       return
     end
-    @post.update!(status: "scheduled")
-    @post.channel_posts.where(status: "skipped").update_all(status: "pending")
-    if @post.scheduled_at <= 1.minute.from_now
-      Posts::PublishJob.perform_later(@post.id)
-    else
-      Posts::PublishJob.set(wait_until: @post.scheduled_at).perform_later(@post.id)
+    if @post.scheduled_at < 1.minute.ago
+      redirect_to edit_company_post_path(@company, @post),
+        alert: "The schedule date is in the past. Pick a new date, or use Publish now."
+      return
     end
+    @post.schedule!
+    @post.channel_posts.where(status: %w[skipped failed]).update_all(status: "pending")
+    enqueue_publish_job
     redirect_to company_post_path(@company, @post), notice: "Scheduled for #{l(@post.scheduled_at, format: :long)}."
   end
 
   def publish_now
     @post.update!(status: "publishing")
-    @post.channel_posts.where(status: %w[pending failed]).update_all(status: "pending")
+    @post.channel_posts.where(status: %w[skipped failed]).update_all(status: "pending")
     Posts::PublishJob.perform_later(@post.id, force: true)
     redirect_to company_post_path(@company, @post), notice: "Publishing now."
   end
@@ -131,6 +149,16 @@ class PostsController < ApplicationController
   end
 
   private
+
+  # Every scheduled job is pinned to the scheduled_at it was created for, so
+  # rescheduling doesn't need to cancel the old job — it just goes stale.
+  def enqueue_publish_job
+    if @post.scheduled_at <= 1.minute.from_now
+      Posts::PublishJob.perform_later(@post.id, scheduled_for: @post.scheduled_at)
+    else
+      Posts::PublishJob.set(wait_until: @post.scheduled_at).perform_later(@post.id, scheduled_for: @post.scheduled_at)
+    end
+  end
 
   def load_post
     @post = @company.posts.find(params[:id])

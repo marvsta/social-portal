@@ -1,0 +1,13 @@
+instagram:
+  company: acme
+  platform: instagram
+  handle: acme_ig
+  status: active
+  external_account_id: "17841000000000000"
+  access_token: test-token
+
+linkedin:
+  company: acme
+  platform: linkedin
+  handle: acme-li
+  status: active

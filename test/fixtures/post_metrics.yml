@@ -1,0 +1,11 @@
+published_snapshot:
+  channel_post: published_instagram
+  likes: 10
+  comments: 2
+  shares: 1
+  saves: 3
+  reach: 500
+  impressions: 700
+  video_views: 0
+  engagement_rate: 3.2
+  captured_at: <%= 12.hours.ago %>

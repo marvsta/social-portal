@@ -6,6 +6,8 @@ class SocialChannel < ApplicationRecord
   has_many :channel_posts, dependent: :destroy
   has_many :posts, through: :channel_posts
 
+  encrypts :access_token
+
   validates :platform, presence: true, inclusion: { in: PLATFORMS }
   validates :handle, presence: true
   validates :status, inclusion: { in: STATUSES }

@@ -70,4 +70,6 @@ group :test do
   # Use system testing [https://guides.rubyonrails.org/testing.html#system-testing]
   gem "capybara"
   gem "selenium-webdriver"
+  # minitest 6 ships mock/stub as a separate gem
+  gem "minitest-mock"
 end

@@ -1,0 +1,16 @@
+scheduled_instagram:
+  post: scheduled
+  social_channel: instagram
+  status: pending
+
+scheduled_linkedin:
+  post: scheduled
+  social_channel: linkedin
+  status: pending
+
+published_instagram:
+  post: published
+  social_channel: instagram
+  status: published
+  external_id: "1789000000"
+  published_at: <%= 1.day.ago %>

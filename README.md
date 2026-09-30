@@ -64,6 +64,15 @@ draft → pending_review → approved → scheduled → published
 
 Each transition is a button on the post detail page. Schedule enqueues a `Posts::PublishJob` via Solid Queue. After publishing, a `Metrics::FetchInstagramJob` is queued 30 minutes later to snapshot insights.
 
+Workflow guarantees:
+
+- **Approval covers content.** Editing the caption, hashtags, or media of an approved or scheduled post knocks it back to `pending_review` (and invalidates any pending publish job). Rescheduling alone keeps the approval.
+- **Rescheduling just works.** Each publish job is pinned to the `scheduled_at` it was enqueued for; changing the date enqueues a fresh job and the old one goes stale. A recurring `Posts::SweepOverdueJob` (every 5 minutes) re-enqueues any scheduled post whose job got lost.
+- **No double publishing.** The job claims channel posts under a row lock, so a scheduled job racing a "Publish now" click (or a double click) publishes each channel exactly once.
+- **Published channels are permanent.** Unticking a channel that already published keeps its publishing record and metric history.
+- **Skipped ≠ failed.** Platforms without auto-publish (everything but Instagram) are marked skipped and don't drag a successful post to `partial_failure`; `partial_failure`/`failed` are reserved for real errors.
+- **Transient Meta errors retry automatically** (up to 4 attempts with backoff); permanent errors (bad token, invalid media) fail immediately with the API message on the channel row.
+
 ## Connecting Instagram (real publishing)
 
 Real publishing requires:
@@ -87,18 +96,29 @@ Then, when scheduling or hitting "Publish now":
 
 - Image posts: works out of the box for any post with at least one image attachment.
 - Video posts: supported via the Reels container flow (`media_type: REELS`).
+- Multiple attachments: published as a carousel (up to Instagram's limit of 10 items).
 
 ### Public media URLs
 
-Instagram requires the image/video URL be **publicly reachable**. In development, set:
+Instagram requires the image/video URL be **publicly reachable**, so `APP_HOST` must be set wherever publishing runs — the job refuses (with a clear per-channel error) if it isn't. In development, point it at a tunnel:
 
 ```bash
 APP_HOST=https://your-ngrok-or-tunnel-url
 ```
 
-before running the server, so `rails_blob_url` resolves to a URL Meta can fetch.
+before running the server, so `rails_blob_url` resolves to a URL Meta can fetch. In production, set `APP_HOST` to the app's public URL (e.g. `https://yourapp.herokuapp.com`); with S3 mounted, the blob URL redirects to a signed S3 URL Meta can fetch.
 
-In production, mount Active Storage on a public bucket (S3, GCS) and the URL is generated automatically.
+### Token storage
+
+Channel access tokens are encrypted at rest with Active Record encryption. The keys live in `config/credentials.yml.enc` (`active_record_encryption:`). On hosts without the master key, set these instead (all three together — generate them with `bin/rails db:encryption:init`):
+
+```bash
+ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY=...
+ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY=...
+ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT=...
+```
+
+Tokens saved before encryption existed are still readable (`support_unencrypted_data`) and get encrypted by the `EncryptSocialChannelAccessTokens` migration / on next save.
 
 ## AI caption generation
 

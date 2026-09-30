@@ -99,12 +99,17 @@
             No channels yet — <%= link_to "connect one", new_company_social_channel_path(@company) %> first.
           </p>
         <% else %>
+          <% published_channel_ids = @post.persisted? ? @post.channel_posts.where(status: "published").pluck(:social_channel_id) : [] %>
           <% @channels.each do |c| %>
+            <% published = published_channel_ids.include?(c.id) %>
             <div class="form-check">
-              <%= check_box_tag "post[social_channel_ids][]", c.id, @post.social_channel_ids.include?(c.id), id: "ch_#{c.id}", class: "form-check-input", data: { platform: c.platform_label } %>
+              <%= check_box_tag "post[social_channel_ids][]", c.id, published || @post.social_channel_ids.include?(c.id), id: "ch_#{c.id}", class: "form-check-input", disabled: published, data: { platform: c.platform_label } %>
+              <%# Disabled inputs don't submit; the server re-adds published channels anyway. %>
+              <%= hidden_field_tag "post[social_channel_ids][]", c.id, id: nil if published %>
               <label class="form-check-label" for="ch_<%= c.id %>">
                 <span class="badge" style="background:<%= c.platform_color %>"><%= c.platform_label %></span>
                 <%= c.display %>
+                <% if published %><small class="text-muted">(published — can't be removed)</small><% end %>
               </label>
             </div>
           <% end %>

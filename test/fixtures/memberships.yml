@@ -1,0 +1,9 @@
+acme_owner:
+  user: owner
+  company: acme
+  role: owner
+
+acme_editor:
+  user: editor
+  company: acme
+  role: editor

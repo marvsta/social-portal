@@ -1,0 +1,12 @@
+DEFAULTS: &DEFAULTS
+  password_digest: <%= BCrypt::Password.create("password123", cost: 4) %>
+
+owner:
+  <<: *DEFAULTS
+  email: owner@example.com
+  name: Owner
+
+editor:
+  <<: *DEFAULTS
+  email: editor@example.com
+  name: Editor

@@ -1,0 +1,32 @@
+draft:
+  company: acme
+  author: editor
+  caption: A draft caption
+  status: draft
+
+approved:
+  company: acme
+  author: editor
+  approved_by: owner
+  approved_at: <%= 1.hour.ago %>
+  caption: An approved caption
+  status: approved
+  scheduled_at: <%= 2.days.from_now %>
+
+scheduled:
+  company: acme
+  author: editor
+  approved_by: owner
+  approved_at: <%= 2.hours.ago %>
+  caption: A scheduled caption
+  status: scheduled
+  scheduled_at: <%= 1.day.from_now %>
+
+published:
+  company: acme
+  author: editor
+  approved_by: owner
+  approved_at: <%= 2.days.ago %>
+  caption: A published caption
+  status: published
+  scheduled_at: <%= 1.day.ago %>
