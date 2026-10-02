@@ -94,9 +94,13 @@ Steps:
 
 Then, when scheduling or hitting "Publish now":
 
-- Image posts: works out of the box for any post with at least one image attachment.
-- Video posts: supported via the Reels container flow (`media_type: REELS`).
-- Multiple attachments: published as a carousel (up to Instagram's limit of 10 items).
+Every post has a **type** (chosen on the post form): feed post, reel, or story.
+
+- **Feed post** — images publish directly (multiple attachments become a carousel, up to Instagram's limit of 10 items); a single video publishes as a Reel (that's what feed videos are on Instagram).
+- **Reel** — exactly one video, published via the Reels container flow (`media_type: REELS`).
+- **Story** — exactly one image or video (`media_type: STORIES`), live for 24 hours. Captions aren't shown on stories, so the caption is optional and stays internal.
+
+The type/media rules are checked when you schedule or hit Publish now, with a clear message if the combination doesn't work. Metric snapshots also adapt to the type: reels record plays (stored as video views), stories record replies (stored as comments) alongside reach/impressions.
 
 ### Public media URLs
 

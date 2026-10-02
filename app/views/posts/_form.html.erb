@@ -6,6 +6,18 @@
   <div class="row">
     <div class="col-md-8">
       <div class="mb-3">
+        <label class="form-label d-block">Type</label>
+        <div class="btn-group btn-group-sm" role="group" aria-label="Post type">
+          <%= f.radio_button :post_type, "post", class: "btn-check", id: "pt_post" %>
+          <label class="btn btn-outline-primary" for="pt_post"><i class="fa fa-th-large"></i> Feed post</label>
+          <%= f.radio_button :post_type, "reel", class: "btn-check", id: "pt_reel" %>
+          <label class="btn btn-outline-primary" for="pt_reel"><i class="fa fa-video-camera"></i> Reel</label>
+          <%= f.radio_button :post_type, "story", class: "btn-check", id: "pt_story" %>
+          <label class="btn btn-outline-primary" for="pt_story"><i class="fa fa-clock-o"></i> Story</label>
+        </div>
+        <small class="text-muted d-block mt-1" id="post_type_hint"></small>
+      </div>
+      <div class="mb-3">
         <%= f.label :title, "Internal title (optional)", class: "form-label" %>
         <%= f.text_field :title, class: "form-control", placeholder: "Used to find this post in search" %>
       </div>
@@ -28,7 +40,8 @@
 
       <div class="mb-3">
         <%= f.label :caption, class: "form-label" %>
-        <%= f.text_area :caption, class: "form-control", rows: 6, required: true, placeholder: "Write your caption here, or generate one above..." %>
+        <%= f.text_area :caption, class: "form-control", rows: 6, required: !@post.story?, placeholder: "Write your caption here, or generate one above..." %>
+        <small class="text-muted d-none" id="caption_story_note">Instagram doesn't show captions on stories — this stays internal.</small>
       </div>
       <div class="mb-3">
         <%= f.label :hashtags, class: "form-label" %>
@@ -128,6 +141,27 @@
 <% end %>
 
 <script>
+  (function() {
+    // Post type selector: hint text + captions aren't shown on stories.
+    var hints = {
+      post:  "Images publish as a feed post (multiple images become a carousel); a single video publishes as a Reel.",
+      reel:  "Attach exactly one video — it publishes as a Reel.",
+      story: "Attach exactly one image or video — it goes live for 24 hours."
+    };
+    var hintEl = document.getElementById("post_type_hint");
+    var captionEl = document.getElementById("post_caption");
+    var storyNote = document.getElementById("caption_story_note");
+    function applyType(type) {
+      if (hintEl) hintEl.textContent = hints[type] || "";
+      if (captionEl) captionEl.required = type !== "story";
+      if (storyNote) storyNote.classList.toggle("d-none", type !== "story");
+    }
+    document.querySelectorAll("input[name='post[post_type]']").forEach(function(radio) {
+      radio.addEventListener("change", function() { applyType(radio.value); });
+      if (radio.checked) applyType(radio.value);
+    });
+  })();
+
   (function() {
     // Turbo replaces <body> on navigation, so re-create the overlay if it's gone.
     var overlay = document.getElementById("ai_image_lightbox");

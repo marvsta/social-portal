@@ -115,18 +115,28 @@ module Posts
 
       blobs = post.media.to_a
       raise Instagram::Client::Error, "Instagram requires at least one image or video" if blobs.empty?
-
-      items = blobs.first(Instagram::Client::MAX_CAROUSEL_ITEMS).map do |blob|
-        { url: public_blob_url(blob), video: blob.video? }
+      if (blockers = post.publish_blockers).any?
+        raise Instagram::Client::Error, "Can't publish this #{post.post_type_label.downcase}: #{blockers.to_sentence}"
       end
 
       client = Instagram::Client.new(channel)
-      result = if items.size > 1
-        client.publish_carousel(items: items, caption: caption)
-      elsif items.first[:video]
-        client.publish_video(video_url: items.first[:url], caption: caption)
-      else
-        client.publish_image(image_url: items.first[:url], caption: caption)
+      result = case post.post_type
+      when "story"
+        blob = blobs.first
+        client.publish_story(url: public_blob_url(blob), video: blob.video?)
+      when "reel"
+        client.publish_video(video_url: public_blob_url(blobs.first), caption: caption)
+      else # feed post: image, carousel, or single video (feed videos are Reels on IG)
+        items = blobs.first(Instagram::Client::MAX_CAROUSEL_ITEMS).map do |blob|
+          { url: public_blob_url(blob), video: blob.video? }
+        end
+        if items.size > 1
+          client.publish_carousel(items: items, caption: caption)
+        elsif items.first[:video]
+          client.publish_video(video_url: items.first[:url], caption: caption)
+        else
+          client.publish_image(image_url: items.first[:url], caption: caption)
+        end
       end
       channel_post.mark_published!(external_id: result[:external_id], external_url: result[:external_url])
     end

@@ -60,6 +60,7 @@ class PostWorkflowTest < ActionDispatch::IntegrationTest
 
   test "scheduling resets failed and skipped channel posts to pending" do
     scheduled = posts(:scheduled)
+    scheduled.media.attach(io: StringIO.new("img"), filename: "a.png", content_type: "image/png")
     scheduled.update!(status: "approved")
     channel_posts(:scheduled_instagram).update!(status: "failed", last_error: "old")
     channel_posts(:scheduled_linkedin).update!(status: "skipped")

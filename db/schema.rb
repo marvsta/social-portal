@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_30_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_30_130000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -117,6 +117,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_30_120000) do
     t.bigint "company_id", null: false
     t.datetime "created_at", null: false
     t.text "hashtags"
+    t.string "post_type", default: "post", null: false
     t.text "review_notes"
     t.datetime "scheduled_at"
     t.string "status", default: "draft", null: false
@@ -124,6 +125,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_30_120000) do
     t.datetime "updated_at", null: false
     t.index ["approved_by_id"], name: "index_posts_on_approved_by_id"
     t.index ["author_id"], name: "index_posts_on_author_id"
+    t.index ["company_id", "post_type"], name: "index_posts_on_company_id_and_post_type"
     t.index ["company_id", "scheduled_at"], name: "index_posts_on_company_id_and_scheduled_at"
     t.index ["company_id", "status"], name: "index_posts_on_company_id_and_status"
     t.index ["company_id"], name: "index_posts_on_company_id"

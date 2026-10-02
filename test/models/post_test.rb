@@ -57,4 +57,43 @@ class PostTest < ActiveSupport::TestCase
     post.update!(caption: "Reworded draft")
     assert_equal "draft", post.status
   end
+
+  test "stories don't require a caption" do
+    post = posts(:draft)
+    post.post_type = "story"
+    post.caption = nil
+    assert post.valid?
+    post.post_type = "post"
+    assert_not post.valid?
+  end
+
+  test "changing the post type after approval sends it back to review" do
+    post = posts(:approved)
+    post.update!(post_type: "story")
+    assert_equal "pending_review", post.status
+  end
+
+  test "publish_blockers enforce type/media rules only when instagram is targeted" do
+    post = posts(:scheduled) # targets instagram + linkedin, no media
+    assert_includes post.publish_blockers.join, "at least one image or video"
+
+    post.media.attach(io: StringIO.new("img"), filename: "a.png", content_type: "image/png")
+    assert_empty post.publish_blockers
+
+    post.post_type = "reel"
+    assert_includes post.publish_blockers.join, "exactly one video"
+
+    post.post_type = "story"
+    assert_empty post.publish_blockers
+    post.media.attach(io: StringIO.new("img2"), filename: "b.png", content_type: "image/png")
+    assert_includes post.publish_blockers.join, "exactly one image or video"
+
+    no_ig = posts(:draft) # no channels at all
+    assert_empty no_ig.publish_blockers
+  end
+
+  test "display_title survives a caption-less story" do
+    post = Post.new(post_type: "story", id: 7)
+    assert_equal "Story #7", post.display_title
+  end
 end

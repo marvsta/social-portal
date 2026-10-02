@@ -1,5 +1,8 @@
 class Post < ApplicationRecord
   STATUSES = %w[draft pending_review approved scheduled publishing published partial_failure failed].freeze
+  # post = feed post (image, video, or carousel); reel = one video published
+  # as a Reel; story = one image/video, live 24h, no caption on Instagram.
+  POST_TYPES = %w[post reel story].freeze
 
   belongs_to :company
   belongs_to :author, class_name: "User"
@@ -12,10 +15,12 @@ class Post < ApplicationRecord
   # in the future for these. Published posts keep their (now past) time.
   PRE_PUBLISH_STATUSES = %w[draft pending_review approved scheduled].freeze
   # An edit to these fields after approval sends the post back to review.
-  CONTENT_FIELDS = %w[caption hashtags].freeze
+  CONTENT_FIELDS = %w[caption hashtags post_type].freeze
 
-  validates :caption, presence: true
+  # Stories carry no caption on Instagram, so don't force one.
+  validates :caption, presence: true, unless: :story?
   validates :status, inclusion: { in: STATUSES }
+  validates :post_type, inclusion: { in: POST_TYPES }
   validate :scheduled_at_in_future, if: -> { scheduled_at_changed? && scheduled_at.present? && PRE_PUBLISH_STATUSES.include?(status) }
 
   before_save :revert_approval_on_content_change
@@ -61,6 +66,41 @@ class Post < ApplicationRecord
   def schedule!
     raise ArgumentError, "Cannot schedule without a scheduled_at" if scheduled_at.blank?
     update!(status: "scheduled")
+  end
+
+  def reel? = post_type == "reel"
+  def story? = post_type == "story"
+
+  # Nil-safe list/heading title: stories can have no caption.
+  def display_title(length = 50)
+    title.presence || caption.to_s.truncate(length).presence || "#{post_type_label} ##{id}"
+  end
+
+  def post_type_label
+    { "post" => "Feed post", "reel" => "Reel", "story" => "Story" }[post_type] || post_type.humanize
+  end
+
+  def post_type_icon_class
+    { "post" => "fa fa-th-large", "reel" => "fa fa-video-camera", "story" => "fa fa-clock-o" }[post_type] || "fa fa-th-large"
+  end
+
+  # Human-readable reasons this post can't be published yet, based on its
+  # type/media combination. Checked before scheduling or publishing so the
+  # user gets told up front instead of the job failing later. Only Instagram
+  # auto-publishes, so the media rules only bite when an IG channel is on.
+  def publish_blockers
+    return [] if social_channels.none? { |c| c.platform == "instagram" }
+
+    blockers = []
+    attachments = media.attached? ? media.to_a : []
+    if attachments.empty?
+      blockers << "Instagram needs at least one image or video"
+    elsif reel?
+      blockers << "a reel needs exactly one video" unless attachments.size == 1 && attachments.first.video?
+    elsif story?
+      blockers << "a story needs exactly one image or video" unless attachments.size == 1
+    end
+    blockers
   end
 
   def primary_media_url

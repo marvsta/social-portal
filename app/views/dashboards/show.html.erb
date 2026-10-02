@@ -76,7 +76,7 @@
           <tbody>
             <% @top_posts.each do |p| %>
               <tr>
-                <td><%= link_to (p.title.presence || p.caption.truncate(50)), company_post_path(@company, p), class: "fw-medium text-dark" %></td>
+                <td><%= link_to (p.display_title), company_post_path(@company, p), class: "fw-medium text-dark" %></td>
                 <td>
                   <% p.social_channels.each do |c| %>
                     <span class="badge me-1" style="background:<%= c.platform_color %>"><%= c.platform_label %></span>

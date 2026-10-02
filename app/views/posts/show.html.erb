@@ -1,4 +1,4 @@
-<% content_for :title, @post.title.presence || @post.caption.truncate(40) %>
+<% content_for :title, @post.display_title(40) %>
 <div class="container-fluid">
   <div class="page-header">
     <div class="row">
@@ -6,6 +6,7 @@
         <h3 class="mb-1"><%= @post.title.presence || "Post ##{@post.id}" %></h3>
         <p class="mb-0">
           <span class="badge me-2" style="background:<%= @post.status_color %>; color:white"><%= @post.status_label %></span>
+          <span class="badge me-2 bg-light text-dark border"><i class="<%= @post.post_type_icon_class %>"></i> <%= @post.post_type_label %></span>
           <% @post.social_channels.each do |c| %>
             <span class="badge me-1" style="background:<%= c.platform_color %>"><%= c.platform_label %> · <%= c.display %></span>
           <% end %>

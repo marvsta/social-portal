@@ -18,10 +18,16 @@ module Posts
     end
 
     def attach_image(post)
+      attach_media(post, content_type: "image/png", filename: "a.png")
+    end
+
+    def attach_video(post)
+      attach_media(post, content_type: "video/mp4", filename: "a.mp4")
+    end
+
+    def attach_media(post, content_type:, filename:)
       status = post.status
-      post.media.attach(
-        io: StringIO.new("fake-png"), filename: "a.png", content_type: "image/png"
-      )
+      post.media.attach(io: StringIO.new("fake-bytes"), filename: filename, content_type: content_type)
       # Attaching media to an approved/scheduled post reverts it to review
       # (that's covered by PostTest); restore the state under test here.
       post.update_columns(status: status)
@@ -126,6 +132,46 @@ module Posts
 
       @linkedin_cp.update!(status: "failed")
       assert_equal "partial_failure", PublishJob.aggregate_status(@post)
+    end
+
+    test "a story publishes through the STORIES flow" do
+      @post.update_columns(post_type: "story")
+      attach_image(@post)
+      calls = []
+      recorder = Object.new
+      recorder.define_singleton_method(:publish_story) do |url:, video:|
+        calls << [ url.present?, video ]
+        { external_id: "st1", external_url: nil }
+      end
+      Instagram::Client.stub :new, recorder do
+        PublishJob.perform_now(@post.id)
+      end
+      assert_equal [ [ true, false ] ], calls
+      assert_equal "published", @instagram_cp.reload.status
+    end
+
+    test "a reel publishes its single video as a Reel" do
+      @post.update_columns(post_type: "reel")
+      attach_video(@post)
+      calls = []
+      recorder = Object.new
+      recorder.define_singleton_method(:publish_video) do |video_url:, caption:|
+        calls << video_url.present?
+        { external_id: "rl1", external_url: nil }
+      end
+      Instagram::Client.stub :new, recorder do
+        PublishJob.perform_now(@post.id)
+      end
+      assert_equal [ true ], calls
+      assert_equal "published", @instagram_cp.reload.status
+    end
+
+    test "a reel without a video fails the channel with the blocker message" do
+      @post.update_columns(post_type: "reel")
+      attach_image(@post)
+      run_with_fake_instagram
+      assert_equal "failed", @instagram_cp.reload.status
+      assert_match "exactly one video", @instagram_cp.last_error
     end
 
     test "multiple images publish as a carousel" do

@@ -101,7 +101,7 @@
                       <% end %>
                     </div>
                     <div class="post-meta">
-                      <%= link_to (p.title.presence || p.caption.to_s.truncate(70)), company_post_path(@company, p) %>
+                      <%= link_to (p.display_title(70)), company_post_path(@company, p) %>
                       <div class="small text-muted">
                         <%= p.social_channels.map(&:platform_label).join(" · ") %>
                       </div>
@@ -138,7 +138,7 @@
                 <li class="list-group-item">
                   <div class="d-flex justify-content-between align-items-start">
                     <div>
-                      <%= link_to (p.title.presence || p.caption.truncate(40)), company_post_path(@company, p), class: "fw-medium text-dark" %>
+                      <%= link_to (p.display_title(40)), company_post_path(@company, p), class: "fw-medium text-dark" %>
                       <div class="small text-muted">
                         <%= l(p.scheduled_at, format: :short) if p.scheduled_at %>
                       </div>
@@ -161,7 +161,7 @@
             <ul class="list-group list-group-flush">
               <% @recent_published.each do |p| %>
                 <li class="list-group-item">
-                  <%= link_to (p.title.presence || p.caption.truncate(40)), company_post_path(@company, p), class: "fw-medium text-dark" %>
+                  <%= link_to (p.display_title(40)), company_post_path(@company, p), class: "fw-medium text-dark" %>
                   <div class="small text-muted">Engagement: <%= number_with_delimiter(p.total_engagement) %></div>
                 </li>
               <% end %>

@@ -94,6 +94,7 @@ class PostsController < ApplicationController
         alert: "The schedule date is in the past. Pick a new date, or use Publish now."
       return
     end
+    return unless publishable?
     @post.schedule!
     @post.channel_posts.where(status: %w[skipped failed]).update_all(status: "pending")
     enqueue_publish_job
@@ -101,6 +102,7 @@ class PostsController < ApplicationController
   end
 
   def publish_now
+    return unless publishable?
     @post.update!(status: "publishing")
     @post.channel_posts.where(status: %w[skipped failed]).update_all(status: "pending")
     Posts::PublishJob.perform_later(@post.id, force: true)
@@ -150,6 +152,16 @@ class PostsController < ApplicationController
 
   private
 
+  # Type/media sanity check before scheduling or publishing, so the user is
+  # told up front instead of the job failing later.
+  def publishable?
+    blockers = @post.publish_blockers
+    return true if blockers.empty?
+    redirect_to edit_company_post_path(@company, @post),
+      alert: "Can't publish this #{@post.post_type_label.downcase} yet: #{blockers.to_sentence}."
+    false
+  end
+
   # Every scheduled job is pinned to the scheduled_at it was created for, so
   # rescheduling doesn't need to cancel the old job — it just goes stale.
   def enqueue_publish_job
@@ -168,7 +180,7 @@ class PostsController < ApplicationController
     # Status is intentionally NOT permitted here: it is only ever changed through
     # the workflow actions (submit_for_review/approve/schedule/publish_now), so a
     # form cannot jump a post straight to "approved" or "published".
-    params.require(:post).permit(:title, :caption, :hashtags, :scheduled_at, :review_notes, media: [])
+    params.require(:post).permit(:title, :caption, :hashtags, :post_type, :scheduled_at, :review_notes, media: [])
   end
 
   def parse_scheduled_at

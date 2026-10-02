@@ -39,6 +39,16 @@ module Instagram
       publish_container(creation_id)
     end
 
+    # Stories take a single image or video and no caption; they expire after
+    # 24 hours (the permalink may come back nil once expired).
+    def publish_story(url:, video: false)
+      params = video ? { media_type: "STORIES", video_url: url } : { media_type: "STORIES", image_url: url }
+      creation = post_path("/#{@channel.external_account_id}/media", **params)
+      creation_id = creation.fetch("id")
+      wait_until_ready(creation_id) if video
+      publish_container(creation_id)
+    end
+
     # items: [{ url:, video: true/false }, ...] — 2..10 of them.
     def publish_carousel(items:, caption: nil)
       raise Error, "A carousel needs 2–#{MAX_CAROUSEL_ITEMS} items" unless items.size.between?(2, MAX_CAROUSEL_ITEMS)
@@ -62,9 +72,13 @@ module Instagram
       publish_container(creation_id)
     end
 
-    def fetch_insights(media_id)
-      response = get_path("/#{media_id}/insights",
-        metric: "impressions,reach,likes,comments,saved,shares")
+    # Valid metric names differ by media product type: reels take "plays"
+    # but not "impressions"; stories take "replies". Callers pass the set
+    # matching what was published (see Metrics::FetchInstagramJob).
+    DEFAULT_INSIGHT_METRICS = "impressions,reach,likes,comments,saved,shares".freeze
+
+    def fetch_insights(media_id, metrics: DEFAULT_INSIGHT_METRICS)
+      response = get_path("/#{media_id}/insights", metric: metrics)
       data = response.fetch("data", [])
       data.each_with_object({}) do |row, h|
         name = row["name"]
